@@ -1,0 +1,77 @@
+<resources>
+    <string name="app_name">Version00</string>
+    <string name="welcome">Bienvenida a Syntra</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="no_account">¿No tienes cuenta? Regístrate</string>
+    <string name="entrenamiento_perso">Entrenamiento personalizado</string>
+    <string name="mmis_rutinas">Mis Entrenamientos</string>
+    <string name="fondo_estrellas">Fondo de estrellas</string>
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="nombre_completo">Nombre completo</string>
+    <string name="correo_electronico">Correo electrónico</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="registrarse">Registrarse</string>
+    <string name="ya_tienes_cuenta_inicia_sesion">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="logo_syntra">Logo de Syntra</string>
+    <string name="bienvenida_a_syntra">Bienvenida a Syntra</string>
+    <string name="email">Email</string>
+    <string name="entrar">Entrar</string>
+    <string name="no_tienes_cuenta_registrate">¿No tienes cuenta? Regístrate</string>
+    <string name="atras">Atrás</string>
+    <string name="mi_cuenta">Mi Cuenta</string>
+    <string name="avatar_usuario">Avatar del usuario</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+    <string name="salir">Salir</string>
+    <string name="mis_rutinas">Mis Rutinas</string>
+    <string name="entrenamiento_general">Entrenamiento General</string>
+    <string name="entrenamiento_rutina">Entrenamiento - Rutina %1$d</string>
+    <string name="progreso_entrenamiento">Progreso del Entrenamiento</string>
+    <string name="fases_de_entrenamiento">Fases de Entrenamiento</string>
+    <string name="volver">Volver</string>
+    <string name="elige_un_musculo">Elige un Músculo</string>
+    <string name="girar_cuerpo">Girar cuerpo</string>
+    <string name="buscar_musculo">Buscar músculo...</string>
+    <string name="cuerpo_humano">Cuerpo humano</string>
+    <string name="todos_los_ejercicios">Todos los Ejercicios</string>
+    <string name="ejercicios_rutina">Ejercicios - Rutina %1$d</string>
+    <string name="error_cargando_ejercicios">Error al cargar ejercicios: %1$s</string>
+    <string name="no_se_encontraron_ejercicios">No se encontraron ejercicios.</string>
+    <string name="seleccionar_ejercicio">Seleccionar Ejercicio</string>
+    <string name="buscar_ejercicio">Buscar ejercicio...</string>
+    <string name="no_se_encontraron_ejercicios_para_busqueda">No se encontraron ejercicios para \"%1$s\".</string>
+    <string name="no_hay_ejercicios_disponibles">No hay ejercicios disponibles.</string>
+    <string name="detalle_de_rutina_id">Detalle de Rutina %1$d</string>
+    <string name="ejercicios_en_esta_rutina_placeholder">Aquí se mostrarán los ejercicios de la rutina.</string>
+    <string name="anadir_ejercicio">Añadir Ejercicio</string>
+    <string name="anadir_ejercicio_desc">Botón para añadir ejercicio a la rutina</string>
+    <string name="comenzar_rutina">Comenzar Rutina</string>
+    <string name="comenzar_rutina_desc">Botón para comenzar esta rutina de entrenamiento</string>
+    <string name="buscar_por_nombre_etc">Buscar por nombre, cuerpo...</string>
+    <string name="no_se_encontraron_ejercicios_con_filtros">No se encontraron ejercicios con los filtros aplicados.</string>
+    <string name="google_client_id" translatable="false" formatted="false">660667964548-g29oljeo4ot2hk34dr04o1jgjtn6hkfe.apps.googleusercontent.com</string>
+    <string name="no_ejercicios_en_rutina">No hay ejercicios en esta rutina.\n¡Añade algunos para empezar!</string>
+    <string name="actualizar_ejercicio">Actualizar Ejercicio</string>
+
+    <string name="seleccionar_ejercicio_titulo">Detalles del Ejercicio</string> <!-- O un título más genérico si 'ejercicio.nombre' es null -->
+    <string name="numero_de_series">Número de series</string>
+    <string name="descanso_entre_series">Descanso entre series</string>
+    <string name="detalles_de_series">Series</string> <!-- Cambiado de "Detalles de Series" a solo "Series" como estaba antes -->
+    <string name="reps_label">Reps</string>
+    <string name="kg_label">Kg</string>
+    <string name="notas_label">Notas</string> <!-- Cambiado de "Notas (opcional)" a solo "Notas" -->
+    <string name="guardar_ejercicio_boton">Guardar</string> <!-- Cambiado de "Actualizar Ejercicio" a "Guardar" como estaba antes -->
+
+    <!-- Strings que ya podrías tener de otras pantallas, pero asegúrate de que existen -->
+    <string name="editar_ejercicio">Editar Ejercicio</string>
+    <string name="ejercicio_eliminado_ok">Ejercicio eliminado correctamente</string>
+    <string name="ejercicio_eliminado_error">Error al eliminar ejercicio</string>
+    <string name="anadir_ejercicios_antes_de_empezar">Añada ejercicios antes de comenzar la rutina.</string>
+
+    <string name="error_cargar_ejercicio_editar">Error: No se pudo cargar el ejercicio para editar.</string>
+    <string name="ejercicio_actualizado_ok">✅ Ejercicio actualizado</string>
+    <string name="ejercicio_actualizado_error">❌ Error al actualizar</string>
+    <string name="notas_opcional_label">notas</string>
+
+</resources>
