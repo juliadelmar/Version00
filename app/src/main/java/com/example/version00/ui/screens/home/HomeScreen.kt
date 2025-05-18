@@ -2,9 +2,16 @@ package com.example.version00.ui.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -15,11 +22,10 @@ import com.example.version00.R
 import com.example.version00.ui.components.BottomBarSyntra
 import com.example.version00.ui.components.TopBarSyntra
 import com.example.version00.ui.viewmodel.AuthViewModel
-import com.example.version00.ui.screens.home.ContentTrainingScreen
+
 @Composable
 fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
     val selectedIndex = remember { mutableStateOf(0) }
-    val currentSubsection = remember { mutableStateOf("home") }
     var avatarUrl by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -34,7 +40,7 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                 navController.navigate("configuration")
             }
         },
-        bottomBar = { BottomBarSyntra(selectedIndex) },
+        bottomBar = { BottomBarSyntra(selectedIndex, navController) }, // 👈 Aquí
         backgroundColor = Color.Transparent
     ) { innerPadding ->
         Box(
@@ -52,10 +58,11 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                     .alpha(0.5f)
             )
 
-            when (currentSubsection.value) {
-                "home" -> ContentBoxHome(
+            // Solo muestra "home" si el índice es 0
+            if (selectedIndex.value == 0) {
+                ContentBoxHome(
                     onNavigateToTraining = {
-                        currentSubsection.value = "training"
+                        navController.navigate("training/1") // ejemplo, usar ID real
                     },
                     onRutinaClick = { rutina ->
                         navController.navigate("rutinaDetail/${rutina.id}")

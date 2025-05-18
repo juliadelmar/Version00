@@ -72,6 +72,25 @@
     <string name="error_cargar_ejercicio_editar">Error: No se pudo cargar el ejercicio para editar.</string>
     <string name="ejercicio_actualizado_ok">✅ Ejercicio actualizado</string>
     <string name="ejercicio_actualizado_error">❌ Error al actualizar</string>
-    <string name="notas_opcional_label">notas</string>
+    <string name="rir_label">RIR</string>
 
+     <string name="eliminar">Eliminar</string>
+    <string name="anadir_ejercicios_antes_de_comenzar">Añada ejercicios antes de comenzar la rutina.</string>
+    <string name="instrucciones">Instrucciones</string>
+    <string name="errores_comunes">Errores Comunes</string>
+    <!-- Fatiga Muscular -->
+    <string name="fatiga_muscular_titulo">Fatiga Muscular</string>
+    <string name="fatiga_muscular_subtitulo">Controlar los niveles de fatiga muscular</string>
+    <string name="ver_detalles">Ver detalles →</string>
+
+    <!-- Leyenda de fatiga -->
+    <string name="estado_debilitado">Debilitado</string>
+    <string name="estado_recuperado">Recuperado</string>
+    <string name="estado_en_recuperacion">En recuperación</string>
+    <string name="estado_fatigado">Fatigado</string>
+
+    <!-- Histórico -->
+    <string name="historial_titulo">Historia</string>
+    <string name="rutina_predeterminada">Rutina A</string>
+    <string name="rutina_personalizada">Entrenamiento Personalizado</string>
 </resources>

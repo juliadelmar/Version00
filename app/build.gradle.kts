@@ -44,6 +44,11 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
     }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(11))
+        }
+    }
 
     packaging {
         resources {
@@ -63,11 +68,18 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+// Vico chart completo (¡las 3 son necesarias!)
+// Vico 2.1.2 completo
+    implementation("com.patrykandpatrick.vico:core:2.1.2")
+    implementation("com.patrykandpatrick.vico:compose:2.1.2")
+    implementation("com.patrykandpatrick.vico:compose-m3:2.1.2") // si usas Material3
+
 
     // Otros componentes esenciales
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    //noinspection UseTomlInstead
 
     // 🔧 Red limpia y única para Retrofit + Gson
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
@@ -81,6 +93,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation("com.squareup.picasso:picasso:2.8")
+    implementation("com.kizitonwose.calendar:compose:2.3.0")
 
     // SVG a Compose (verifica compatibilidad con Compose BOM)
 
@@ -91,6 +104,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation(libs.firebase.firestore.ktx)
 
     // Tests
     testImplementation(libs.junit)

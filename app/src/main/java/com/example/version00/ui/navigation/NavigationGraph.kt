@@ -4,26 +4,30 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.version00.ui.screens.ActividadesScreen
 import com.example.version00.ui.screens.auth.LoginScreen
 import com.example.version00.ui.screens.auth.RegisterScreen
 import com.example.version00.ui.screens.configuration.ConfigurationScreen
-import com.example.version00.ui.screens.home.ContentTrainingScreen
 import com.example.version00.ui.screens.home.HomeScreen
 import com.example.version00.ui.screens.rutina.DetalleEjercicioScreen
-// import com.example.version00.ui.screens.rutina.EjerciciosScreen
+import com.example.version00.ui.screens.rutina.EditEjercicioRutinaScreen
 import com.example.version00.ui.screens.rutina.ElegirEjercicioScreen
 import com.example.version00.ui.screens.rutina.ListaEjerciciosScreen
 import com.example.version00.ui.screens.rutina.RutinaDetailScreen
+import com.example.version00.ui.screens.rutina.RutinaScreen
 import com.example.version00.ui.viewmodel.AuthViewModel
 import com.example.version00.ui.viewmodel.EjerciciosViewModel
-// Asegúrate de importar EditEjercicioRutinaScreen
-import com.example.version00.ui.screens.rutina.EditEjercicioRutinaScreen
+import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
 
 object AppDestinations {
     const val LOGIN_ROUTE = "login"
@@ -34,17 +38,16 @@ object AppDestinations {
     const val TRAINING_ROUTE = "training"
     const val LISTA_EJERCICIOS_ROUTE = "ejercicios"
     const val ELEGIR_EJERCICIO_ROUTE = "elegirEjercicio"
-    const val EDIT_EJERCICIO_RUTINA_ROUTE = "edit_ejercicio_rutina" // Ya lo tienes definido, ¡bien!
+    const val EDIT_EJERCICIO_RUTINA_ROUTE = "edit_ejercicio_rutina"
+    const val ACTIVIDADES_ROUTE = "actividades"
 
-    // const val EJERCICIO_DETAIL_ROUTE = "detalle"
 }
 
-@RequiresApi(35) // Considera si esta anotación es realmente necesaria para todo el NavGraph
+@RequiresApi(35)
 @Composable
 fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel) {
     NavHost(navController = navController, startDestination = AppDestinations.LOGIN_ROUTE) {
 
-        // ... (tus rutas existentes de LOGIN_ROUTE, REGISTER_ROUTE, HOME_ROUTE, CONFIGURATION_ROUTE) ...
         composable(AppDestinations.LOGIN_ROUTE) {
             LoginScreen(
                 authViewModel,
@@ -77,7 +80,6 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
             ConfigurationScreen(authViewModel, navController = navController)
         }
 
-
         composable(
             route = "${AppDestinations.RUTINA_DETAIL_ROUTE}/{rutinaId}",
             arguments = listOf(navArgument("rutinaId") { type = NavType.IntType })
@@ -85,13 +87,38 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
             val rutinaId = backStackEntry.arguments?.getInt("rutinaId") ?: -1
             RutinaDetailScreen(rutinaId = rutinaId, navController = navController)
         }
+        composable(AppDestinations.ACTIVIDADES_ROUTE) {
+            ActividadesScreen(navController = navController)
+        }
 
+
+        // Pantalla para ejecutar la rutina
         composable(
             route = "${AppDestinations.TRAINING_ROUTE}/{rutinaId}",
             arguments = listOf(navArgument("rutinaId") { type = NavType.IntType })
         ) { backStackEntry ->
             val rutinaId = backStackEntry.arguments?.getInt("rutinaId") ?: -1
-            ContentTrainingScreen(rutinaId = rutinaId, navController = navController)
+            val rutinaViewModel: RutinaFirebaseViewModel = viewModel()
+
+            var ejercicios by remember { mutableStateOf(emptyList<com.example.version00.ui.model.EjercicioGuardado>()) }
+            var rutinaNombre by remember { mutableStateOf("Rutina $rutinaId") }
+
+            LaunchedEffect(rutinaId) {
+                rutinaViewModel.obtenerEjerciciosDeRutina(rutinaId) { lista ->
+                    ejercicios = lista
+                }
+
+                rutinaViewModel.obtenerRutinaPorId(rutinaId) { rutina ->
+                    rutina?.let { rutinaNombre = it.nombre }
+                }
+            }
+
+            RutinaScreen(
+                rutinaId = rutinaId,
+                ejercicios = ejercicios,
+                navController = navController,
+                rutinaNombre = rutinaNombre
+            )
         }
 
         composable(
@@ -100,9 +127,11 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
         ) { backStackEntry ->
             val rutinaId = backStackEntry.arguments?.getInt("rutinaId") ?: -1
             val ejerciciosViewModel: EjerciciosViewModel = viewModel()
+
             LaunchedEffect(Unit) {
                 ejerciciosViewModel.cargarEjercicios()
             }
+
             ListaEjerciciosScreen(
                 viewModel = ejerciciosViewModel,
                 rutinaIdContext = rutinaId,
@@ -110,8 +139,9 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
                 onBack = { navController.popBackStack() }
             )
         }
+
         composable(
-            route = "detalleEjercicio/{rutinaId}/{ejercicioId}", // Esta es para añadir un NUEVO ejercicio
+            route = "detalleEjercicio/{rutinaId}/{ejercicioId}",
             arguments = listOf(
                 navArgument("rutinaId") { type = NavType.IntType },
                 navArgument("ejercicioId") { type = NavType.IntType }
@@ -122,44 +152,34 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
             DetalleEjercicioScreen(rutinaId, ejercicioId, navController)
         }
 
-
         composable(AppDestinations.ELEGIR_EJERCICIO_ROUTE) {
             ElegirEjercicioScreen(
                 onMusculoSeleccionado = { musculo ->
-                    // Lógica de navegación
+                    // Implementa la lógica si es necesario
                 },
                 navController = navController
             )
         }
 
-        // ===== ¡AQUÍ ES DONDE DEBES AÑADIR LA NUEVA RUTA! =====
         composable(
             route = "${AppDestinations.EDIT_EJERCICIO_RUTINA_ROUTE}/{rutinaId}/{ejercicioId}",
             arguments = listOf(
                 navArgument("rutinaId") { type = NavType.IntType },
-                navArgument("ejercicioId") { type = NavType.IntType } // Este es el EjercicioGuardado.id
+                navArgument("ejercicioId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             val rutinaId = backStackEntry.arguments?.getInt("rutinaId") ?: -1
             val ejercicioId = backStackEntry.arguments?.getInt("ejercicioId") ?: -1
 
-            // Asegúrate de que los IDs son válidos antes de llamar a la pantalla
             if (rutinaId != -1 && ejercicioId != -1) {
                 EditEjercicioRutinaScreen(
                     rutinaId = rutinaId,
                     ejercicioId = ejercicioId,
                     navController = navController
-                    // El RutinaFirebaseViewModel se instanciará dentro de EditEjercicioRutinaScreen
-                    // usando androidx.lifecycle.viewmodel.compose.viewModel() por defecto.
                 )
             } else {
-                // Manejar el caso de IDs inválidos, quizás mostrando un error o volviendo atrás.
-                // Por ahora, podría ser un Log y no hacer nada, o popBackStack.
-                Log.e("AuthNavGraph", "IDs inválidos para EDIT_EJERCICIO_RUTINA_ROUTE: rutinaId=$rutinaId, ejercicioId=$ejercicioId")
-                // navController.popBackStack() // Opcional: volver si los IDs son malos
+                Log.e("AuthNavGraph", "IDs inválidos para editar ejercicio: rutinaId=$rutinaId, ejercicioId=$ejercicioId")
             }
         }
-        // ========================================================
-
     }
 }

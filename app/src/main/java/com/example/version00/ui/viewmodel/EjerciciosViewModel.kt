@@ -8,9 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.version00.ui.model.Ejercicio
 import com.example.version00.ui.network.RetrofitClient
 import kotlinx.coroutines.launch
+
 object FiltrosDisponibles {
     const val NINGUNO = "Todos"
-    val EQUIPAMIENTOS = listOf(NINGUNO, "Sin equipo", "Mancuernas", "Barra", "Máquina", "Bandas elásticas")
+    val EQUIPAMIENTOS = listOf(NINGUNO, "Peso corporal ", "Mancuernas", "Barra", "Máquina", "Bandas elásticas")
     val DIFICULTADES = listOf(NINGUNO, "Principiante", "Intermedio", "Avanzado")
     val MUSCULOS = listOf(NINGUNO, "Pectoral", "Bíceps", "Glúteo", "Abdomen", "Espalda", "Pierna")
     val PARTE_DEL_CUERPO = listOf(NINGUNO, "Pecho", "Espalda", "Hombros", "Piernas", "Glúteos", "Abdomen", "Brazos")
@@ -80,6 +81,16 @@ class EjerciciosViewModel : ViewModel() {
                 _ejercicios.clear()
                 _ejercicios.addAll(resultado)
                 Log.d("EjerciciosVM", "Ejercicios cargados: ${resultado.size}")
+
+// DEBUG: Mostrar los campos clave del primer ejercicio (o varios si quieres)
+                resultado.take(5).forEachIndexed { index, ejercicio ->
+                    Log.d("EjerciciosVM", "[$index] Nombre: ${ejercicio.nombre}")
+                    Log.d("EjerciciosVM", "[$index] Activación: ${ejercicio.porcentajeDeActivacion}")
+                    Log.d("EjerciciosVM", "[$index] Principales: ${ejercicio.musculosTrabajados.principales}")
+                    Log.d("EjerciciosVM", "[$index] Secundarios: ${ejercicio.musculosTrabajados.secundarios}")
+                }
+
+
             } catch (e: Exception) {
                 Log.e("EjerciciosVM", "Error al cargar ejercicios", e)
                 error.value = e.message ?: "Error desconocido al obtener ejercicios."
