@@ -18,6 +18,7 @@ import com.example.version00.ui.screens.ActividadesScreen
 import com.example.version00.ui.screens.auth.LoginScreen
 import com.example.version00.ui.screens.auth.RegisterScreen
 import com.example.version00.ui.screens.configuration.ConfigurationScreen
+import com.example.version00.ui.screens.cuerpo.MedidasCorporalesScreen
 import com.example.version00.ui.screens.home.HomeScreen
 import com.example.version00.ui.screens.rutina.DetalleEjercicioScreen
 import com.example.version00.ui.screens.rutina.EditEjercicioRutinaScreen
@@ -40,6 +41,8 @@ object AppDestinations {
     const val ELEGIR_EJERCICIO_ROUTE = "elegirEjercicio"
     const val EDIT_EJERCICIO_RUTINA_ROUTE = "edit_ejercicio_rutina"
     const val ACTIVIDADES_ROUTE = "actividades"
+    const val CUERPO_ROUTE = "cuerpo"
+
 
 }
 
@@ -90,6 +93,10 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
         composable(AppDestinations.ACTIVIDADES_ROUTE) {
             ActividadesScreen(navController = navController)
         }
+        composable(AppDestinations.CUERPO_ROUTE) {
+            MedidasCorporalesScreen(navController = navController)
+        }
+
 
 
         // Pantalla para ejecutar la rutina

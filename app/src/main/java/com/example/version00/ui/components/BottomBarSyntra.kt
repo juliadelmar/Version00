@@ -61,7 +61,7 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
                         1 -> navController.navigate("actividades")
                         2 -> {} // Explorar
                         3 -> {} // Ejercicios
-                        4 -> {} // Cuerpo
+                        4 -> navController.navigate("cuerpo")// Cuerpo
                     }
                 },
                 selectedContentColor = iconColor,

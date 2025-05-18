@@ -69,10 +69,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.navigation:navigation-compose:2.7.7")
 // Vico chart completo (¡las 3 son necesarias!)
-// Vico 2.1.2 completo
     implementation("com.patrykandpatrick.vico:core:2.1.2")
     implementation("com.patrykandpatrick.vico:compose:2.1.2")
-    implementation("com.patrykandpatrick.vico:compose-m3:2.1.2") // si usas Material3
+    implementation("com.patrykandpatrick.vico:compose-m3:2.1.2") // Material 3
+ // si usas Material3
 
 
     // Otros componentes esenciales
