@@ -25,7 +25,6 @@ class HistorialViewModel : ViewModel() {
             "fatigaPorMusculo" to fatigaPorMusculo
         )
 
-        // Usamos el UID de fecha para evitar sobreescritura
         val key = db.child("historial_fatiga").push().key
         if (key != null) {
             db.child("historial_fatiga").child(key).setValue(historial)
