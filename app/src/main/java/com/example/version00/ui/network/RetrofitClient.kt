@@ -5,7 +5,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 object RetrofitClient {
-    // Asegúrate que esta URL base es correcta y accesible
     private const val BASE_URL = "https://deporte-main-production.up.railway.app/"
 
     val api: EjerciciosApi by lazy {
