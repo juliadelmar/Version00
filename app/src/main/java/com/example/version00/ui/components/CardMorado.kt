@@ -18,6 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.version00.R
 
+/**
+ * Tarjeta decorativa que muestra un resumen del entrenamiento personalizado,
+ * con barra de progreso y elementos visuales (mancuernas).
+ *
+ * @param onClick Acción que se ejecuta al pulsar la tarjeta.
+ */
 @Composable
 fun RecuadroMorado(onClick: () -> Unit) {
     var progreso by remember { mutableStateOf(0.75f) }
@@ -36,6 +42,7 @@ fun RecuadroMorado(onClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            // Contenido textual y barra de progreso
             Column(
                 modifier = Modifier.align(Alignment.TopStart),
                 verticalArrangement = Arrangement.Top,
@@ -51,9 +58,7 @@ fun RecuadroMorado(onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(26.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Progreso",
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -80,7 +85,7 @@ fun RecuadroMorado(onClick: () -> Unit) {
                 )
             }
 
-            // Mancuernas decorativas
+            // Iconos decorativos de mancuernas
             Image(
                 painter = painterResource(id = R.drawable.mancuerna_horixontal),
                 contentDescription = "Mancuerna superior",

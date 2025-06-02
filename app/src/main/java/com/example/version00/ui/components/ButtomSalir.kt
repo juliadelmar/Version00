@@ -13,18 +13,22 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import com.google.firebase.auth.FirebaseAuth
 
-
+/**
+ * Composable que muestra un botón "Salir" y un diálogo de confirmación para cerrar sesión.
+ * Al confirmar, cierra sesión en Firebase y navega al login.
+ */
 @Composable
 fun ButtomSalir(navController: NavHostController) {
     var mostrarDialogo by remember { mutableStateOf(false) }
 
+    // Si se activa, se muestra el diálogo de confirmación
     if (mostrarDialogo) {
         AlertDialog(
             onDismissRequest = { mostrarDialogo = false },
             confirmButton = {
                 TextButton(onClick = {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate("login") {
+                    FirebaseAuth.getInstance().signOut() // Cierra sesión en Firebase
+                    navController.navigate("login") {   // Navega al login eliminando home del backstack
                         popUpTo("home") { inclusive = true }
                     }
                     mostrarDialogo = false
@@ -33,22 +37,21 @@ fun ButtomSalir(navController: NavHostController) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    mostrarDialogo = false
-                }) {
+                TextButton(onClick = { mostrarDialogo = false }) {
                     Text("Cancelar", color = Color.White)
                 }
             },
             title = { Text("Cerrar sesión", color = Color.White) },
             text = { Text("¿Estás segura de que quieres cerrar sesión?", color = Color.LightGray) },
-            backgroundColor = Color(0xFF222222) // AlertDialog Material usa `backgroundColor`, no `containerColor`
+            backgroundColor = Color(0xFF222222) // Fondo oscuro del diálogo
         )
     }
 
+    // Botón visible en la pantalla que activa el diálogo al pulsarlo
     Box(modifier = Modifier.fillMaxWidth()) {
         TextButton(
             onClick = { mostrarDialogo = true },
-            modifier = Modifier.align(Alignment.Center) // Center en Box
+            modifier = Modifier.align(Alignment.Center)
         ) {
             Text("Salir", color = Color.White, fontSize = 18.sp)
         }

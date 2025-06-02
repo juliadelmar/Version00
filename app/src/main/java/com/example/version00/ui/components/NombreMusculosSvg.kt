@@ -1,13 +1,24 @@
 package com.example.version00.ui.components
 
-
 import androidx.compose.ui.graphics.Color
 
+/**
+ * Convierte un valor de activación (0 a 100) en un color que representa su intensidad.
+ * El color es rojo para 100% y se va degradando hacia blanco a medida que la activación disminuye.
+ *
+ * @param activation Valor de activación muscular en porcentaje.
+ * @return Color correspondiente a la intensidad.
+ */
 fun getColorFromActivation(activation: Float): Color {
-    val clamped = activation.coerceIn(0f, 100f)
+    val clamped = activation.coerceIn(0f, 100f) // Asegura que el valor esté entre 0 y 100
     val intensity = clamped / 100f
-    return Color(red = 1f, green = 1f - intensity, blue = 1f - intensity)
+    return Color(red = 1f, green = 1f - intensity, blue = 1f - intensity) // Rojo puro para 100%, blanco para 0%
 }
+
+/**
+ * Mapeo entre nombres de músculos (según la API o base de datos) y sus IDs en el SVG.
+ * Usado para aplicar color o animaciones en imágenes vectoriales del cuerpo.
+ */
 val apiToSvgId = mapOf(
     "Esternocleidomastoideo derecho" to "esternocleidomastoideo_derecho",
     "Esternocleidomastoideo izquierdo" to "esternocleidomastoideo_izquierdo",

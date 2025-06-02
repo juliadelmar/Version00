@@ -15,13 +15,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.version00.R
 
+/**
+ * Tarjeta horizontal que representa una fase del entrenamiento.
+ * Muestra título, rango de semanas y una imagen decorativa.
+ *
+ * @param titulo Nombre de la fase (ej. "Fase de fuerza").
+ * @param semanas Texto con duración (ej. "Semana 1-4").
+ */
 @Composable
 fun FaseCard(titulo: String, semanas: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp) // Más fino
-            .background(Color(0xFF2B1F30))
+            .height(80.dp) // Altura reducida
+            .background(Color(0xFF2B1F30)) // Fondo oscuro
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Row(
@@ -29,6 +36,7 @@ fun FaseCard(titulo: String, semanas: String) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Columna con texto
             Column {
                 Text(
                     text = titulo,
@@ -42,6 +50,7 @@ fun FaseCard(titulo: String, semanas: String) {
                 )
             }
 
+            // Imagen decorativa girada (mancuerna)
             Image(
                 painter = painterResource(id = R.drawable.mancuerna_horixontal),
                 contentDescription = "Mancuerna",
@@ -51,8 +60,8 @@ fun FaseCard(titulo: String, semanas: String) {
                     .graphicsLayer(rotationZ = 90f)
                     .offset(x = (-6).dp, y = (-10).dp)
             )
-            Spacer(modifier = Modifier.width(15.dp))
 
+            Spacer(modifier = Modifier.width(15.dp))
         }
     }
 }

@@ -1,63 +1,69 @@
 package com.example.version00.ui.screens.actividades
 
-import android.content.Context // Import necesario
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Tab // O androidx.compose.material3.Tab si migras a M3 completamente
-import androidx.compose.material.TabRow // O androidx.compose.material3.TabRow si migras a M3 completamente
-import androidx.compose.material.Text // O androidx.compose.material3.Text si migras a M3 completamente
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext // Import necesario
-import androidx.navigation.NavHostController
+// Importaciones necesarias
+import android.content.Context // Para acceder a SharedPreferences y guardar el índice de pestaña
+import androidx.compose.foundation.layout.Column // Para organizar los elementos verticalmente
+import androidx.compose.material.Tab // Componente de pestaña (Material 2)
+import androidx.compose.material.TabRow // Contenedor de pestañas
+import androidx.compose.material.Text // Componente de texto
+import androidx.compose.runtime.* // Para estado y composición
+import androidx.compose.ui.graphics.Color // Para definir colores
+import androidx.compose.ui.platform.LocalContext // Permite obtener el contexto actual (Context)
+import androidx.navigation.NavHostController // Controlador de navegación (por si lo necesitas más adelante)
 
-// Es buena práctica definir las claves de SharedPreferences como constantes
-private const val PREFS_NAME = "app_prefs"
-private const val PREF_LAST_TAB_INDEX = "last_activities_tab_index"
+// Constantes para las claves de SharedPreferences
+private const val PREFS_NAME = "app_prefs" // Nombre del archivo de preferencias
+private const val PREF_LAST_TAB_INDEX = "last_activities_tab_index" // Clave para guardar el índice de pestaña
 
 @Composable
 fun ActividadesScreen(navController: NavHostController) {
+    // Obtiene el contexto actual
     val context = LocalContext.current
+
+    // Carga las preferencias compartidas (SharedPreferences) una sola vez
     val sharedPreferences = remember {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    // Lista con los títulos de las pestañas
     val tabTitles = listOf("Actividad", "Histórico")
+
+    // Estado para guardar la pestaña seleccionada, recuperando el valor guardado en SharedPreferences
     var selectedTabIndex by remember {
-        // Leer el último índice guardado, o 0 por defecto
         mutableStateOf(sharedPreferences.getInt(PREF_LAST_TAB_INDEX, 0))
     }
 
+    // Composición de la UI
     Column {
-        TabRow( // Si usas Material 3, sería androidx.compose.material3.TabRow
-            selectedTabIndex = selectedTabIndex,
-            backgroundColor = Color.Black, // En M3, esto se configura diferente, ej. containerColor
-            contentColor = Color(0xFFFF9800) // En M3, es selectedContentColor y unselectedContentColor
+        // Fila de pestañas
+        TabRow(
+            selectedTabIndex = selectedTabIndex, // Indica cuál pestaña está seleccionada
+            backgroundColor = Color.Black, // Color del fondo de la barra
+            contentColor = Color(0xFFFF9800) // Color para la pestaña activa
         ) {
+            // Crea una pestaña por cada título
             tabTitles.forEachIndexed { index, title ->
-                Tab( // Si usas Material 3, sería androidx.compose.material3.Tab
-                    selected = selectedTabIndex == index,
+                Tab(
+                    selected = selectedTabIndex == index, // Si está seleccionada
                     onClick = {
-                        selectedTabIndex = index
-                        // Guardar el índice seleccionado en SharedPreferences
+                        selectedTabIndex = index // Cambia la pestaña activa
+                        // Guarda la selección en SharedPreferences para recordar al volver
                         sharedPreferences.edit().putInt(PREF_LAST_TAB_INDEX, index).apply()
                     },
                     text = {
                         Text(
                             title,
-                            color = if (selectedTabIndex == index) Color.White else Color.Gray
+                            color = if (selectedTabIndex == index) Color.White else Color.Gray // Color del texto según si está activa o no
                         )
                     }
                 )
             }
         }
 
+        // Contenido según la pestaña seleccionada
         when (selectedTabIndex) {
-            0 -> FatigaMuscularView()
-            1 -> HistoricoView()
+            0 -> FatigaMuscularView() // Pestaña 0: muestra vista de fatiga muscular
+            1 -> HistoricoView() // Pestaña 1: muestra el historial de rutinas
         }
     }
 }

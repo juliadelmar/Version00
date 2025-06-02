@@ -1,49 +1,19 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.version00.ui.screens.rutina
 
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,53 +31,53 @@ import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Pantalla para editar un ejercicio ya guardado dentro de una rutina.
+ * Permite modificar el número de series, repeticiones, pesos, descanso y notas.
+ */
 @RequiresApi(35)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEjercicioRutinaScreen(
     rutinaId: Int,
-    ejercicioId: Int, // ID del EjercicioGuardado (que es el _id del Ejercicio original)
+    ejercicioId: Int, // ID del ejercicio guardado dentro de la rutina
     navController: NavHostController,
     viewModel: RutinaFirebaseViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // Estado original del ejercicio a editar
     var ejercicioGuardadoOriginal by remember { mutableStateOf<EjercicioGuardado?>(null) }
+
+    // Estados para controlar carga y actualización
     var isLoadingEjercicio by remember { mutableStateOf(true) }
     var isUpdating by remember { mutableStateOf(false) }
 
-    // Estados para los campos editables
-    var series by remember { mutableStateOf(0) } // Inicializar a 0 o un valor por defecto adecuado
+    // Campos editables
+    var series by remember { mutableStateOf(0) }
     var descanso by remember { mutableStateOf(0) }
     val reps = remember { mutableStateListOf<String>() }
     val pesos = remember { mutableStateListOf<String>() }
     var notas by remember { mutableStateOf("") }
 
+    // 🔄 Cargar los datos del ejercicio desde Firebase al entrar
     LaunchedEffect(rutinaId, ejercicioId) {
         isLoadingEjercicio = true
-        Log.d("EditScreen", "Lanzado LaunchedEffect para cargar ejercicio: rutinaId=$rutinaId, ejercicioId=$ejercicioId")
         viewModel.obtenerEjercicioGuardadoDeRutina(rutinaId, ejercicioId) { ejercicio ->
-            Log.d("EditScreen", "Ejercicio obtenido de ViewModel: $ejercicio")
             if (ejercicio != null) {
                 ejercicioGuardadoOriginal = ejercicio
                 series = ejercicio.series
                 descanso = ejercicio.descanso
                 notas = ejercicio.notas
-
-                reps.clear()
+                reps.clear(); pesos.clear()
                 reps.addAll(ejercicio.reps)
-                while (reps.size < ejercicio.series) reps.add("") // Asegurar tamaño mínimo
-
-                pesos.clear()
                 pesos.addAll(ejercicio.pesos)
-                while (pesos.size < ejercicio.series) pesos.add("") // Asegurar tamaño mínimo
-
-                Log.d("EditScreen", "Datos cargados: series=$series, reps=$reps")
+                while (reps.size < series) reps.add("")
+                while (pesos.size < series) pesos.add("")
             } else {
                 scope.launch {
-                    snackbarHostState.showSnackbar("Error: No se pudo cargar el ejercicio para editar.")
-                    delay(1000) // Pequeña pausa para que el usuario vea el snackbar
+                    snackbarHostState.showSnackbar("Error: No se pudo cargar el ejercicio.")
+                    delay(1000)
                     navController.popBackStack()
                 }
             }
@@ -115,31 +85,17 @@ fun EditEjercicioRutinaScreen(
         }
     }
 
-    // Sincronizar el tamaño de reps y pesos con el estado 'series'
+    // 🔁 Ajustar tamaño de las listas de reps/pesos si cambia el número de series
     LaunchedEffect(series) {
-        // Solo ajustar si el ejercicio ya ha sido cargado para evitar reseteos iniciales
         if (ejercicioGuardadoOriginal != null) {
-            Log.d("EditScreen", "Series cambió a $series. Ajustando reps/pesos. Actual reps: ${reps.toList()}, Actual pesos: ${pesos.toList()}")
-            // Ajustar reps
-            val currentRepsSize = reps.size
-            if (currentRepsSize < series) {
-                repeat(series - currentRepsSize) { reps.add("") }
-            } else if (currentRepsSize > series) {
-                repeat(currentRepsSize - series) { reps.removeLast() }
-            }
-
-            // Ajustar pesos
-            val currentPesosSize = pesos.size
-            if (currentPesosSize < series) {
-                repeat(series - currentPesosSize) { pesos.add("") }
-            } else if (currentPesosSize > series) {
-                repeat(currentPesosSize - series) { pesos.removeLast() }
-            }
-            Log.d("EditScreen", "Después de ajustar: reps=${reps.toList()}, pesos=${pesos.toList()}")
+            while (reps.size < series) reps.add("")
+            while (reps.size > series) reps.removeLast()
+            while (pesos.size < series) pesos.add("")
+            while (pesos.size > series) pesos.removeLast()
         }
     }
 
-
+    // 🧱 Estructura principal de la pantalla
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Black,
@@ -148,7 +104,7 @@ fun EditEjercicioRutinaScreen(
                 title = { Text(stringResource(R.string.actualizar_ejercicio)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.volver), tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -175,6 +131,7 @@ fun EditEjercicioRutinaScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                // 🖼 Imagen + Nombre
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(
                         model = currentEjercicio.urlGif,
@@ -191,32 +148,32 @@ fun EditEjercicioRutinaScreen(
 
                 Spacer(Modifier.height(24.dp))
 
-                // Selector de Series
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Número de series", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (series > 1) series-- else series = 1 }) { // Mínimo 1 serie
-                            Text("-", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                // 🔢 Número de series
+                Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                    Text("Número de series", color = Color.White)
+                    Row {
+                        IconButton(onClick = { if (series > 1) series-- }) {
+                            Text("-", color = Color.White)
                         }
-                        Text(series.toString(), color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 12.dp))
+                        Text(series.toString(), color = Color.White, modifier = Modifier.padding(horizontal = 12.dp))
                         IconButton(onClick = { if (series < 10) series++ }) {
-                            Text("+", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                            Text("+", color = Color.White)
                         }
                     }
                 }
 
                 Spacer(Modifier.height(16.dp))
 
-                // Selector de Descanso
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Descanso (segundos)", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (descanso >= 10) descanso -= 10 else descanso = 0 }) { // Mínimo 0
-                            Text("-", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                // ⏱ Tiempo de descanso
+                Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                    Text("Descanso (segundos)", color = Color.White)
+                    Row {
+                        IconButton(onClick = { if (descanso >= 10) descanso -= 10 }) {
+                            Text("-", color = Color.White)
                         }
-                        Text("${descanso}s", color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 12.dp))
-                        IconButton(onClick = { if (descanso <= 290) descanso += 10 }) {
-                            Text("+", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                        Text("${descanso}s", color = Color.White, modifier = Modifier.padding(horizontal = 12.dp))
+                        IconButton(onClick = { descanso += 10 }) {
+                            Text("+", color = Color.White)
                         }
                     }
                 }
@@ -224,72 +181,73 @@ fun EditEjercicioRutinaScreen(
                 Spacer(Modifier.height(24.dp))
                 Text("Detalles de Series", color = Color.White, style = MaterialTheme.typography.titleMedium)
 
-                // Solo mostrar campos de reps/pesos si hay series
-                if (series > 0) {
-                    repeat(series) { index ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceAround,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "${index + 1}º", color = Color.White, modifier = Modifier.align(Alignment.CenterVertically).padding(end = 8.dp))
-                            OutlinedTextField(
-                                value = reps.getOrElse(index) { "" },
-                                onValueChange = { reps[index] = it.filter { char -> char.isDigit() }.take(3) },
-                                label = { Text("Reps") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color.White, unfocusedBorderColor = Color.Gray,
-                                    focusedLabelColor = Color.White, unfocusedLabelColor = Color.Gray,
-                                    cursorColor = Color.White, focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                                ),
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
+                // 🔄 Lista de sets: reps + kg
+                repeat(series) { index ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("${index + 1}º", color = Color.White, modifier = Modifier.width(30.dp))
+
+                        OutlinedTextField(
+                            value = reps.getOrElse(index) { "" },
+                            onValueChange = { reps[index] = it.filter { it.isDigit() } },
+                            label = { Text("Reps") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text("x", color = Color.White, modifier = Modifier.align(Alignment.CenterVertically))
-                            Spacer(Modifier.width(8.dp))
-                            OutlinedTextField(
-                                value = pesos.getOrElse(index) { "" },
-                                onValueChange = { pesos[index] = it.filter { char -> char.isDigit() || char == '.' }.take(5) },
-                                label = { Text("Kg") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = if (index == series -1) ImeAction.Next else ImeAction.Next),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color.White, unfocusedBorderColor = Color.Gray,
-                                    focusedLabelColor = Color.White, unfocusedLabelColor = Color.Gray,
-                                    cursorColor = Color.White, focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                                ),
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
+                        )
+
+                        Text("x", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
+
+                        OutlinedTextField(
+                            value = pesos.getOrElse(index) { "" },
+                            onValueChange = { pesos[index] = it.filter { c -> c.isDigit() || c == '.' } },
+                            label = { Text("Kg") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White
                             )
-                        }
+                        )
                     }
                 }
 
-
                 Spacer(Modifier.height(16.dp))
+
+                // 📝 Campo para notas
                 OutlinedTextField(
                     value = notas,
                     onValueChange = { notas = it },
                     label = { Text("Notas (opcional)") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 4,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.White, unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color.White, unfocusedLabelColor = Color.Gray,
-                        cursorColor = Color.White, focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                    ),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                    maxLines = 4
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color.White
+                    )
                 )
 
                 Spacer(Modifier.height(24.dp))
+
+                // 💾 Botón para guardar cambios
                 Button(
                     onClick = {
                         if (isUpdating) return@Button
-
                         isUpdating = true
+
                         val ejercicioActualizado = currentEjercicio.copy(
                             series = series,
                             descanso = descanso,
@@ -297,40 +255,34 @@ fun EditEjercicioRutinaScreen(
                             pesos = pesos.take(series).toMutableList(),
                             notas = notas
                         )
-                        Log.d("EditScreen", "Actualizando ejercicio: $ejercicioActualizado")
 
                         viewModel.actualizarEjercicioDetalladoEnRutina(
                             rutinaId = rutinaId,
                             ejercicioActualizado = ejercicioActualizado
-                        ) { actualizadoCorrecto, mensaje ->
+                        ) { success, mensaje ->
                             scope.launch {
                                 snackbarHostState.showSnackbar(mensaje)
-                                if (actualizadoCorrecto) {
-                                    Log.d("EditScreen", "Ejercicio actualizado con éxito, enviando señal de refresco.")
+                                if (success) {
                                     navController.previousBackStackEntry?.savedStateHandle?.set("ejercicio_actualizado_key", true)
                                     navController.popBackStack()
-                                } else {
-                                    Log.e("EditScreen", "Error al actualizar ejercicio: $mensaje")
                                 }
                                 isUpdating = false
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
                     enabled = !isUpdating,
+                    modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
                 ) {
                     if (isUpdating) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                     } else {
-                        Text(stringResource(R.string.actualizar_ejercicio), color = Color.White) // Usar string resource
+                        Text("Actualizar ejercicio", color = Color.White)
                     }
                 }
+
                 Spacer(Modifier.height(16.dp))
             }
-        } ?: run {
-            // Si ejercicioGuardadoOriginal es null después de isLoadingEjercicio=false
-            // (Ya manejado por el popBackStack en el LaunchedEffect si falla la carga)
         }
     }
 }

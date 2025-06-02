@@ -1,6 +1,5 @@
-package com.example.version00.ui.data // O el paquete donde quieras que esté
+package com.example.version00.ui.data
 
-// Importa Fill explícitamente si quieres ser muy claro
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
@@ -19,7 +18,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 
-
+/**
+ * Composable que dibuja un mapa visual de activación muscular
+ * sobre una figura SVG superpuesta a una imagen de fondo.
+ *
+ * @param modifier Modificador externo (padding, tamaño, etc.).
+ * @param backgroundImageRes Recurso de imagen de fondo (ej. silueta del cuerpo humano).
+ * @param svgImageRes Recurso XML con el vector drawable (SVG parseable).
+ * @param activacionPorId Mapa con valores de activación muscular por ID (0 a 100).
+ * @param svgViewBoxWidth Ancho declarado del viewBox SVG original.
+ * @param svgViewBoxHeight Alto declarado del viewBox SVG original.
+ */
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun SvgMuscleHighlighter(
@@ -31,6 +40,8 @@ fun SvgMuscleHighlighter(
     svgViewBoxHeight: Float,
 ) {
     val context = LocalContext.current
+
+    // Parseamos el SVG y recordamos los paths
     val svgParts = remember(svgImageRes, context) {
         if (svgImageRes != 0) {
             val parts = parseVectorDrawableFile(context, svgImageRes)
@@ -39,7 +50,10 @@ fun SvgMuscleHighlighter(
         } else emptyList()
     }
 
+    // Contenedor que ajusta escala y alineación
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+
+        // Imagen de fondo: silueta humana
         Image(
             painter = painterResource(id = backgroundImageRes),
             contentDescription = "Fondo",
@@ -55,7 +69,7 @@ fun SvgMuscleHighlighter(
                 val canvasHeight = size.height
 
                 if (svgViewBoxWidth <= 0f || svgViewBoxHeight <= 0f) {
-                    Log.e("SvgHighlighter", "svgViewBoxWidth or svgViewBoxHeight is zero or negative. Cannot scale.")
+                    Log.e("SvgHighlighter", "svgViewBoxWidth or svgViewBoxHeight is invalid.")
                     return@Canvas
                 }
 
@@ -70,15 +84,16 @@ fun SvgMuscleHighlighter(
                 val extraShiftRight = 62f
                 val extraShiftDown = 18f
 
+                // Dibujo SVG escalado y alineado
                 translate(left = offsetX + extraShiftRight, top = offsetY + extraShiftDown) {
                     scale(scale = finalScale) {
                         svgParts.forEach { part ->
                             val activacion = activacionPorId[part.id] ?: 0
                             val color = when {
-                                activacion >= 50 -> Color.Red.copy(alpha = 0.7f)
-                                activacion >= 33 -> Color.Green.copy(alpha = 0.7f)
-                                activacion > 0 -> Color.LightGray.copy(alpha = 0.7f)
-                                else -> Color.Gray.copy(alpha = 0.3f)
+                                activacion >= 50 -> Color.Red.copy(alpha = 0.7f)        // Activación alta
+                                activacion >= 33 -> Color.Green.copy(alpha = 0.7f)      // Activación media
+                                activacion > 0   -> Color.LightGray.copy(alpha = 0.7f)  // Activación baja
+                                else             -> Color.Gray.copy(alpha = 0.3f)       // No activo
                             }
                             drawPath(
                                 path = part.composePath,
@@ -89,10 +104,8 @@ fun SvgMuscleHighlighter(
                     }
                 }
             }
-        } else {
-            if (svgImageRes != 0) {
-                Log.w("SvgHighlighter", "No SVG parts to draw for resource ID $svgImageRes.")
-            }
+        } else if (svgImageRes != 0) {
+            Log.w("SvgHighlighter", "No se encontraron partes SVG para $svgImageRes.")
         }
     }
 }

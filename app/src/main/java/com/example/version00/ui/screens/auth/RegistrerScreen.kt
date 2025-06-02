@@ -1,5 +1,6 @@
 package com.example.version00.ui.screens.auth
 
+// Imports necesarios para UI, estado, navegación y recursos
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,23 +16,33 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import com.example.version00.R
 import com.example.version00.ui.viewmodel.AuthViewModel
 
+// Pantalla de registro de usuario
 @Composable
-fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  navController: NavHostController) {
+fun RegisterScreen(
+    viewModel: AuthViewModel,              // ViewModel para manejar registro
+    onRegisterSuccess: () -> Unit,         // Callback cuando el registro es exitoso
+    navController: NavHostController       // Controlador de navegación
+) {
+    // Estados para capturar el input del usuario
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    // Si ya está logueado, redirige automáticamente
     if (viewModel.isLoggedIn) {
         onRegisterSuccess()
     }
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black)) {
 
-        // Fondo de estrellas
+    // Contenedor principal
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black) // Fondo negro
+    ) {
+        // Imagen de fondo (estética espacial)
         Image(
             painter = painterResource(id = R.drawable.stars_with_transparency),
             contentDescription = "Fondo estrellas",
@@ -39,6 +50,7 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
             contentScale = ContentScale.Crop
         )
 
+        // Contenido centrado
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -46,6 +58,7 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Título
             Text(
                 "Crear cuenta",
                 style = MaterialTheme.typography.headlineMedium,
@@ -54,14 +67,15 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo: Nombre completo
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
                 label = { Text("Nombre completo", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFB39DDB),
-                    unfocusedBorderColor = Color(0xFF9575CD),
+                    focusedBorderColor = Color(0xFFB39DDB),  // Lila claro
+                    unfocusedBorderColor = Color(0xFF9575CD), // Lila oscuro
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     cursorColor = Color.White
@@ -70,11 +84,12 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Campo: Correo electrónico
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Correo electrónico", color = Color.White) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), // Teclado con @
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFFB39DDB),
@@ -87,13 +102,13 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Campo: Contraseña
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña", color = Color.White) },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = PasswordVisualTransformation(), // Oculta el texto
                 modifier = Modifier.fillMaxWidth(),
-
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFFB39DDB),
                     unfocusedBorderColor = Color(0xFF9575CD),
@@ -108,8 +123,8 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
             // Botón de registro
             Button(
                 onClick = {
-                    viewModel.register(email, password, nombre){
-                        onRegisterSuccess()
+                    viewModel.register(email, password, nombre) {
+                        onRegisterSuccess() // Llama a callback cuando el registro es exitoso
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -117,6 +132,7 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
                 Text("Registrarse")
             }
 
+            // Mostrar errores si existen
             viewModel.errorMessage?.let {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(it, color = Color.Red)
@@ -124,4 +140,3 @@ fun RegisterScreen(viewModel: AuthViewModel, onRegisterSuccess: () -> Unit,  nav
         }
     }
 }
-

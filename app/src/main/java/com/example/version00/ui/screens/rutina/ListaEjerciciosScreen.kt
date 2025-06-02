@@ -38,7 +38,6 @@ import com.example.version00.ui.model.Ejercicio
 private val DarkGrayAlpha30 = Color.DarkGray.copy(alpha = 0.3f)
 private val TextFieldFocusedBorderColor = Color(0xFFB39DDB)
 private val TextFieldUnfocusedBorderColor = Color(0xFF9575CD)
-
 @Composable
 fun ListaEjerciciosScreen(
     viewModel: EjerciciosViewModel,
@@ -46,27 +45,13 @@ fun ListaEjerciciosScreen(
     navController: NavHostController,
     onBack: () -> Unit
 ) {
-    // LaunchedEffect para cargar datos iniciales.
-    // La clave `Unit` hace que se ejecute solo una vez cuando el Composable entra en la composición.
-    // Si quieres que se recargue bajo ciertas condiciones (ej. si rutinaIdContext cambia),
-    // puedes añadir rutinaIdContext como clave: LaunchedEffect(rutinaIdContext)
+    // Se ejecuta una sola vez al entrar en la pantalla: inicia la carga de ejercicios desde Firebase o caché
     LaunchedEffect(Unit) {
-        Log.d("UIScreenDebug", "LaunchedEffect: Verificando si cargar ejercicios.")
-        // Cargar solo si _ejerciciosCompletos está vacío (indicando que no se han cargado nunca o hubo error)
-        // y no hay una carga en progreso.
-        // viewModel.ejerciciosFiltradosPaginados.isEmpty() podría ser true temporalmente mientras se filtran.
-        // Es mejor basar la carga inicial en si la lista completa (_ejerciciosCompletos en VM) está vacía.
-        // El ViewModel ahora tiene lógica para no recargar si ya tiene datos.
         viewModel.cargarEjercicios()
     }
 
-    // Usar `collectAsState` si tus propiedades del ViewModel fueran StateFlows.
-    // Como son MutableState<T> y se usan con `by`, Compose ya los observa.
-    // `rememberUpdatedState` es útil si pasas estos valores a lambdas de efectos
-    // que no quieres que se relancen cuando el valor cambia, pero la lambda siempre use el último valor.
-    // Para la observación directa en la UI, `by viewModel.property` es suficiente.
-
-    val ejerciciosPaginados = viewModel.ejerciciosFiltradosPaginados // Observación directa
+    // Acceso directo a estados observables del ViewModel
+    val ejerciciosPaginados = viewModel.ejerciciosFiltradosPaginados
     val cargando = viewModel.cargando
     val error = viewModel.error
     val busqueda = viewModel.busquedaPorTexto
@@ -78,18 +63,15 @@ fun ListaEjerciciosScreen(
 
     val focusManager = LocalFocusManager.current
 
-    // Log para ver cuándo se recompone la UI principal
-    Log.d("UIScreenDebug", "Recomponiendo ListaEjerciciosScreen. Cargando: $cargando, Error: $error, N.Ejercicios: ${ejerciciosPaginados.size}, HayMas: $hayMas")
-
-
     Scaffold(
         containerColor = Color.Black,
         topBar = {
+            // Barra superior con botón para volver atrás
             TopAppBar(
-                title = { Text(stringResource(R.string.seleccionar_ejercicio), color = Color.White) },
+                title = { Text("Seleccionar ejercicio", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.volver), tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.DarkGray.copy(alpha = 0.2f))
@@ -102,25 +84,33 @@ fun ListaEjerciciosScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
+            // Búsqueda por texto (nombre del ejercicio)
             OutlinedTextField(
                 value = busqueda,
-                onValueChange = {
-                    Log.d("UIScreenDebug", "onValueChange búsqueda: $it")
-                    viewModel.actualizarBusquedaPorTexto(it)
-                },
-                label = { Text(stringResource(R.string.buscar_ejercicio), color = Color.LightGray) },
+                onValueChange = { viewModel.actualizarBusquedaPorTexto(it) },
+                label = { Text("Buscar ejercicio", color = Color.LightGray) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                colors = OutlinedTextFieldDefaults.colors( /* ... tus colores ... */ )
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Color(0xFFB39DDB),
+                    unfocusedBorderColor = Color(0xFF9575CD),
+                    cursorColor = Color.White
+                )
             )
 
+            // Filtros por equipamiento, músculo y dificultad
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
             ) {
+
                 FiltroDropdown(
                     label = stringResource(R.string.filtro_equipamiento),
                     opciones = FiltrosDisponibles.EQUIPAMIENTOS,
@@ -153,58 +143,56 @@ fun ListaEjerciciosScreen(
                 )
             }
 
+            // Mostrar resultados según estado
             when {
-                // Condición de carga inicial: si `cargando` es true Y `ejerciciosPaginados` está vacío.
-                // Esto evita mostrar el spinner grande si ya hay datos y se están cargando más.
-                cargando && ejerciciosPaginados.isEmpty() && error == null ->
+                cargando && ejerciciosPaginados.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Color.White)
-                        Log.d("UIScreenDebug", "Mostrando Spinner GRANDE de carga.")
                     }
-                error != null ->
+                }
+                error != null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.error_cargar_ejercicios, error ?: stringResource(R.string.desconocido)), color = Color.Red)
-                        Log.d("UIScreenDebug", "Mostrando Mensaje de ERROR.")
+                        Text("Error al cargar ejercicios: $error", color = Color.Red)
                     }
-
-                !cargando && error == null && ejerciciosPaginados.isEmpty() ->
+                }
+                ejerciciosPaginados.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.no_se_encontraron_ejercicios), color = Color.Gray)
-                        Log.d("UIScreenDebug", "Mostrando 'No se encontraron ejercicios'.")
+                        Text("No se encontraron ejercicios", color = Color.Gray)
                     }
+                }
                 else -> {
-                    Log.d("UIScreenDebug", "Mostrando LazyColumn con ${ejerciciosPaginados.size} ejercicios.")
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        items(ejerciciosPaginados, key = { ejercicio -> ejercicio._id }) { ejercicio ->
-                            ItemEjercicio(ejercicio = ejercicio, onClick = {
+                        // Elementos de la lista de ejercicios
+                        items(ejerciciosPaginados, key = { it._id }) { ejercicio ->
+                            ItemEjercicio(ejercicio) {
                                 navController.navigate("detalleEjercicio/${rutinaIdContext}/${ejercicio._id}")
-                            })
+                            }
                         }
 
+                        // Botón para cargar más ejercicios
                         if (hayMas) {
                             item {
                                 Button(
-                                    onClick = {
-                                        Log.d("UIScreenDebug", "Botón 'Mostrar más' clickeado.")
-                                        viewModel.mostrarMasEjercicios()
-                                    },
+                                    onClick = { viewModel.mostrarMasEjercicios() },
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text(stringResource(R.string.mostrar_mas), color = Color.White)
+                                    Text("Mostrar más", color = Color.White)
                                 }
                             }
                         }
 
-                        // Indicador de carga al final si se está cargando más y ya hay items (y no hay error)
-                        if (cargando && ejerciciosPaginados.isNotEmpty() && error == null) {
+                        // Indicador de carga adicional al final de la lista
+                        if (cargando && ejerciciosPaginados.isNotEmpty()) {
                             item {
-                                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
-                                    Log.d("UIScreenDebug", "Mostrando Spinner PEQUEÑO de carga (cargando más).")
                                 }
                             }
                         }

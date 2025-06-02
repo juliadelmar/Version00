@@ -18,12 +18,19 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.version00.ui.theme.Indices
 
+/**
+ * Barra superior personalizada (TopAppBar) para la app.
+ * Incluye avatar, título y un icono de correo.
+ *
+ * @param avatarUrl URL de la imagen del usuario.
+ * @param onAvatarClick Acción al hacer clic sobre el avatar.
+ */
 @Composable
-fun TopBarSyntra(avatarUrl: String,  onAvatarClick: () -> Unit) {
+fun TopBarSyntra(avatarUrl: String, onAvatarClick: () -> Unit) {
     TopAppBar(
-        backgroundColor = Indices,
+        backgroundColor = Indices, // Color definido en el tema
         contentColor = Color.Black,
-        elevation = 0.dp
+        elevation = 0.dp // Sin sombra
     ) {
         Row(
             modifier = Modifier
@@ -32,13 +39,13 @@ fun TopBarSyntra(avatarUrl: String,  onAvatarClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Avatar dentro de un Card redondo
             Card(
                 shape = CircleShape,
                 elevation = 8.dp,
                 modifier = Modifier
                     .size(40.dp)
                     .clickable { onAvatarClick() }
-
             ) {
                 AsyncImage(
                     model = avatarUrl,
@@ -46,10 +53,14 @@ fun TopBarSyntra(avatarUrl: String,  onAvatarClick: () -> Unit) {
                     modifier = Modifier.size(100.dp)
                 )
             }
+
+            // Nombre de usuario
             Text(
-                text = "Selenya",
+                text = "Selenya", // Se puede hacer dinámico
                 fontSize = 24.sp
             )
+
+            // Icono de mensajes (decorativo)
             Icon(
                 imageVector = Icons.Default.Email,
                 contentDescription = "Mensajes",

@@ -17,6 +17,10 @@ import androidx.navigation.NavHostController
 import com.example.version00.R
 import com.example.version00.ui.theme.Indices
 
+/**
+ * Barra de navegación inferior con 5 ítems personalizados.
+ * Controla navegación entre pantallas principales.
+ */
 @Composable
 fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostController) {
     BottomNavigation(
@@ -26,6 +30,7 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
         val iconColor = Color.Black
         val labelColor = Color.Black
 
+        // Lista de iconos y títulos para la barra
         val items = listOf(
             Pair(R.drawable.ic_entrenamiento, "Entrenamiento"),
             Pair(R.drawable.ic_actividades, "Actividades"),
@@ -34,6 +39,7 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
             Pair(R.drawable.ic_cuerpo, "Cuerpo")
         )
 
+        // Crea cada ítem de navegación
         items.forEachIndexed { index, item ->
             BottomNavigationItem(
                 icon = {
@@ -56,12 +62,13 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
                 selected = selectedIndex.value == index,
                 onClick = {
                     selectedIndex.value = index
+                    // Navega según el ítem tocado
                     when (index) {
                         0 -> navController.navigate("home")
                         1 -> navController.navigate("actividades")
                         2 -> navController.navigate("regla")
                         3 -> navController.navigate("amigos")
-                        4 -> navController.navigate("cuerpo")// Cuerpo
+                        4 -> navController.navigate("cuerpo")
                     }
                 },
                 selectedContentColor = iconColor,
@@ -72,5 +79,3 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
         }
     }
 }
-
-

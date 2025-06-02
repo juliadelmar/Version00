@@ -24,24 +24,27 @@ import com.example.version00.ui.data.Fase
 
 @Composable
 fun ContentTrainingScreen(
-    rutinaId: Int,                     // Parámetro 1 (nombrado en la llamada)
-    navController: NavHostController   // Parámetro 2 (nombrado en la llamada)
-){
+    rutinaId: Int,                     // ID de la rutina seleccionada (se puede usar para cargar contenido específico)
+    navController: NavHostController   // Controlador de navegación para futuras acciones
+) {
+    // Lista de fases de entrenamiento
     val listaDeFases = listOf(
         Fase("1: Resistencia", "4 semanas"),
         Fase("2: Hipertrofia", "6 semanas"),
         Fase("3: Fuerza", "3 semanas")
     )
 
+    // Semanas de la fase actual
     val semanas = listOf("Semana 1", "Semana 2", "Semana 3", "Semana 4")
-    var semanaSeleccionada by remember { mutableStateOf(semanas[0]) }
-    var expanded by remember { mutableStateOf(false) }
+    var semanaSeleccionada by remember { mutableStateOf(semanas[0]) } // Semana seleccionada (a futuro)
+    var expanded by remember { mutableStateOf(false) }                // Estado expandido para la UI de semanas
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
+        // Imagen de fondo semitransparente con estrellas
         Image(
             painter = painterResource(id = R.drawable.stars_with_transparency),
             contentDescription = "Fondo estrellas",
@@ -66,9 +69,10 @@ fun ContentTrainingScreen(
                     fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.width(40.dp))
-                CircularProgress()
+                CircularProgress() // Componente que muestra progreso general
             }
 
+            // Lista de fases como tarjetas
             Text("Fases de entrenamiento", color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -82,6 +86,8 @@ fun ContentTrainingScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // Progreso en la fase actual (ejemplo estático)
             Text("Fase 1: Resistencia", color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -89,7 +95,7 @@ fun ContentTrainingScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             LinearProgressIndicator(
-                progress = 0.25f,
+                progress = 0.25f, // 25% de progreso
                 color = Color(0xFFB39DDB),
                 backgroundColor = Color.Gray.copy(alpha = 0.3f),
                 modifier = Modifier
@@ -99,9 +105,8 @@ fun ContentTrainingScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            SemanasExpandiblesUI(
-            )
-            }
+            // Lista expandible de semanas con ejercicios (si aplica)
+            SemanasExpandiblesUI()
         }
     }
-
+}

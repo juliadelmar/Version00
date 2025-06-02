@@ -1,5 +1,6 @@
 package com.example.version00.ui.screens.configuration
 
+// Imports necesarios para UI, estado, navegación y almacenamiento
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
@@ -25,19 +26,24 @@ import com.example.version00.ui.theme.Indices
 import com.example.version00.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
+// Pantalla de configuración del usuario (perfil, tema, cerrar sesión)
 @Composable
 fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostController) {
+    // Estados para datos del usuario
     var avatarUrl by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    // Obtener tema guardado desde SharedPreferences
     val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     val savedTheme = sharedPref.getString("app_theme", "system") ?: "system"
     var currentTheme by remember { mutableStateOf(savedTheme) }
+
+    // Scope para lanzar corutinas (para guardar tema y recrear actividad)
     val scope = rememberCoroutineScope()
 
-    // Cargar datos del usuario
+    // Cargar datos del usuario al inicio
     LaunchedEffect(Unit) {
         viewModel.cargarDatosUsuario { nombreFetched, emailFetched, urlFetched ->
             nombre = nombreFetched
@@ -46,12 +52,14 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
         }
     }
 
+    // Layout principal en columna
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
+        // Fila de título con botón atrás
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -67,6 +75,7 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
             Text("Mi Cuenta", fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
         }
 
+        // Información del usuario con imagen y texto
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -87,6 +96,7 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
             }
         }
 
+        // Opciones de tema
         Text("Tema de la aplicación", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
 
         listOf("light", "dark").forEach { themeOption ->
@@ -98,7 +108,7 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
                         currentTheme = themeOption
                         scope.launch {
                             sharedPref.edit().putString("app_theme", themeOption).apply()
-                            (context as? ComponentActivity)?.recreate() // Recarga la actividad para aplicar el tema
+                            (context as? ComponentActivity)?.recreate() // Recarga la actividad para aplicar el nuevo tema
                         }
                     },
                 shape = RoundedCornerShape(20.dp),
@@ -110,7 +120,7 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
                 ) {
                     RadioButton(
                         selected = currentTheme == themeOption,
-                        onClick = null
+                        onClick = null // Manejado por el clickable externo
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -122,6 +132,7 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
             }
         }
 
+        // Espaciado y botón de cerrar sesión
         Spacer(modifier = Modifier.height(30.dp))
         ButtomSalir(navController = navController)
     }

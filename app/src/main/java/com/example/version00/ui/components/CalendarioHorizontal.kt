@@ -1,30 +1,17 @@
 package com.example.version00.ui.components
 
+// Imports necesarios para layout, estado, fechas y estilos
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,11 +23,19 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
+/**
+ * Calendario horizontal que muestra 60 días (30 antes y 30 después del día actual).
+ * Marca los días donde hay actividad con una barra morada.
+ *
+ * @param diasConEjercicio Lista de fechas donde el usuario ha hecho ejercicio.
+ */
 @Composable
 fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
     val today = LocalDate.now()
     val startDate = today.minusDays(30)
     val endDate = today.plusDays(30)
+
+    // Lista de fechas a mostrar
     val days = remember {
         generateSequence(startDate) { it.plusDays(1) }
             .takeWhile { !it.isAfter(endDate) }
@@ -50,18 +45,18 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
     val listState = rememberLazyListState()
     var selectedMonth by remember { mutableStateOf(today.month) }
 
-    // DEBUG LOGS
+    // Log de depuración
     LaunchedEffect(diasConEjercicio) {
-        Log.d("Calendario", "Fechas con ejercicio: ${'$'}diasConEjercicio")
+        Log.d("Calendario", "Fechas con ejercicio: $diasConEjercicio")
     }
 
+    // Auto scroll al día actual al iniciar
     LaunchedEffect(Unit) {
         val todayIndex = days.indexOf(today)
         if (todayIndex != -1) {
             listState.scrollToItem(todayIndex)
         }
     }
-
 
     Row(
         modifier = Modifier
@@ -70,7 +65,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Recuadro morado fijo para el mes
+        // Muestra el nombre del mes en un recuadro morado
         Card(
             backgroundColor = Color(0xFFB58EDC),
             shape = RoundedCornerShape(12.dp),
@@ -79,10 +74,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
                 .width(60.dp)
                 .height(70.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = selectedMonth.name.take(3).lowercase(Locale.getDefault())
                         .replaceFirstChar { it.titlecase(Locale.getDefault()) },
@@ -95,7 +87,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // LazyRow scrollable para los días
+        // Lista horizontal de días
         LazyRow(
             state = listState,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
@@ -107,14 +99,15 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
 
                 Column(
                     modifier = Modifier
-                        .clickable { }
+                        .clickable { /* futuro: manejar selección */ }
                         .width(60.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // Si hay ejercicio en esa fecha, muestra una barra indicadora
                     val formatter = DateTimeFormatter.ISO_DATE
                     if (diasConEjercicio.any { it.format(formatter) == date.format(formatter) }) {
-                        Log.d("Calendario", "✅ Coincidencia en: ${'$'}date")
+                        Log.d("Calendario", "✅ Coincidencia en: $date")
                         Box(
                             modifier = Modifier
                                 .height(4.dp)
@@ -126,6 +119,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
+                    // Día del mes
                     Text(
                         text = date.dayOfMonth.toString(),
                         color = MaterialTheme.colorScheme.onSurface,
@@ -133,6 +127,8 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+
+                    // Día de la semana en español (ej. lun, mar, etc.)
                     Text(
                         text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es")),
                         color = MaterialTheme.colorScheme.onSurface,

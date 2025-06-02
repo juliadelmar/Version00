@@ -17,6 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.version00.R
 
+/**
+ * Tarjeta visual que representa una rutina existente.
+ * Muestra el nombre de la rutina y dos imágenes decorativas.
+ *
+ * @param modifier Permite personalizar tamaño y posición externa.
+ * @param nombreRutina Nombre que se muestra dentro de la tarjeta.
+ * @param onClick Acción a ejecutar al pulsar la tarjeta.
+ */
 @Composable
 fun CardMoradoRutinas(
     modifier: Modifier = Modifier,
@@ -35,13 +43,14 @@ fun CardMoradoRutinas(
             modifier = Modifier
                 .size(width = 150.dp, height = 100.dp)
                 .padding(8.dp)
-                .clickable(onClick = onClick)
+                .clickable(onClick = onClick) // Tarjeta clickeable
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(12.dp)
             ) {
+                // Título con el nombre de la rutina
                 Text(
                     text = nombreRutina,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -51,6 +60,7 @@ fun CardMoradoRutinas(
                     modifier = Modifier.align(Alignment.CenterStart)
                 )
 
+                // Imagen decorativa superior
                 Image(
                     painter = painterResource(id = R.drawable.mancuerna_horixontal),
                     contentDescription = "Mancuerna superior",
@@ -61,6 +71,7 @@ fun CardMoradoRutinas(
                         .offset(x = 18.dp, y = 10.dp)
                 )
 
+                // Imagen decorativa inferior
                 Image(
                     painter = painterResource(id = R.drawable.ic_mancuerna_oblicua),
                     contentDescription = "Mancuerna inferior",

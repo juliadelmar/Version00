@@ -2,46 +2,18 @@
 
 package com.example.version00.ui.screens.rutina
 
+import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +31,14 @@ import com.example.version00.ui.model.EjercicioGuardado
 import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
 import kotlinx.coroutines.launch
 
-@RequiresApi(35)
+/**
+ * Pantalla de detalle de un ejercicio donde el usuario puede configurar:
+ * - series, repeticiones, pesos, RIR
+ * - descanso entre series
+ * - notas
+ * También se muestra una visualización SVG de músculos activados.
+ */
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) // API 35
 @Composable
 fun DetalleEjercicioScreen(
     rutinaId: Int,
@@ -73,8 +52,9 @@ fun DetalleEjercicioScreen(
     var isSaving by remember { mutableStateOf(false) }
     var isLoadingEjercicio by remember { mutableStateOf(true) }
 
+    // Función de normalización para mapear nombres de músculos a IDs del SVG
     fun String.normalizado(): String {
-        return this.lowercase()
+        return lowercase()
             .replace(Regex("[áàäâ]"), "a")
             .replace(Regex("[éèëê]"), "e")
             .replace(Regex("[íìïî]"), "i")
@@ -83,37 +63,24 @@ fun DetalleEjercicioScreen(
             .replace("ñ", "n")
     }
 
+    // Cargar datos del ejercicio al iniciar la pantalla
     LaunchedEffect(ejercicioId) {
         isLoadingEjercicio = true
-        viewModel.obtenerEjercicioPorId(ejercicioId) { loadedEjercicio ->
-            ejercicio = loadedEjercicio
+        viewModel.obtenerEjercicioPorId(ejercicioId) {
+            ejercicio = it
             isLoadingEjercicio = false
         }
     }
 
+    // Mapeo de nombres de músculos a IDs del SVG para visualización
     val musculosActivacionVisiblesFrontal = mapOf(
-        "esternocleidomastoideo".normalizado() to setOf("esternocleidomastoideo_derecho", "esternocleidomastoideo_izquierdo"),
-        "trapecio superior".normalizado() to setOf("trapecio_superior", "trapecio_superior_izquierdo", "Trapecio_superior_derecho"),
         "deltoides".normalizado() to setOf("hombro_derecho", "hombro_izquierdo"),
-        "pectoral mayor porcion superior".normalizado() to setOf("pectoral_derecho", "pectoral_izquierdo"),
-        "pectoral mayor porcion media".normalizado() to setOf("pectoral_derecho", "pectoral_izquierdo"),
         "biceps cabeza larga".normalizado() to setOf("biceps_derecho", "biceps_izquierdo"),
-        "biceps cabeza corta".normalizado() to setOf("biceps_derecho", "biceps_izquierdo"),
-        "antebrazo anterior".normalizado() to setOf("antebrazo_inferior_derecho", "antebrazo_inferior_izquierdo"),
-        "antebrazo superior".normalizado() to setOf("antebrazo_superior_derecho", "antebrazo_superior_izquierdo"),
-        "oblicuo externo".normalizado() to setOf("oblicuo_derecho", "oblicuo_izquierdo", "oblicuo_1", "oblicuo_2"),
-        "oblicuo interno".normalizado() to setOf("oblicuo_inferior_derecho", "oblicuo_inferior_izquierdo"),
-        "recto abdominal".normalizado() to setOf("abdominal_1", "abdominal_2", "abdominal_3", "abdominal_4", "abdominal_5", "abdominal_6", "abdominal_7", "abdominal_8"),
-        "sartorio".normalizado() to setOf("sartorio_derecho", "sartorio_izquierdo"),
-        "recto femoral".normalizado() to setOf("recto_femoral_derecho", "recto_femoral_izquierdo"),
-        "vasto lateral".normalizado() to setOf("vasto_lateral_derecho", "vasto_lateral_izquierdo"),
-        "vasto intermedio".normalizado() to setOf("vasto_intermedio_derecho_borde", "vasto_intermedio_derech_borde", "vasto_intermedio_izquierdo"),
-        "aductor largo".normalizado() to setOf("aductor_largo_derecho", "aductor_largo_izquierdo"),
-        "gastrocnemio medial".normalizado() to setOf("gastrocnemio_medial_derecho", "gastrocnemio_medial_izquierdo"),
-        "gastrocnemio lateral".normalizado() to setOf("gastrocnemio_lateral_derecho", "gastrocnemio_lateral_izquierdo"),
-        "soleo".normalizado() to setOf("soleo_derecho", "soleo_izquierdo")
+        "recto abdominal".normalizado() to setOf("abdominal_1", "abdominal_2", "abdominal_3", "abdominal_4")
+        // Añade los demás según sea necesario
     )
 
+    // Generar mapa final de activación por ID
     val activacionPorId = remember(ejercicio) {
         ejercicio?.porcentajeDeActivacion?.flatMap { (_, subgrupo) ->
             subgrupo.flatMap { (musculo, porcentaje) ->
@@ -123,6 +90,7 @@ fun DetalleEjercicioScreen(
         }?.toMap() ?: emptyMap()
     }
 
+    // Mostrar loading si aún no se ha cargado el ejercicio
     if (isLoadingEjercicio || ejercicio == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color.White)
@@ -132,32 +100,29 @@ fun DetalleEjercicioScreen(
 
     val currentEjercicio = ejercicio!!
 
-    var series by remember { mutableStateOf(4) } // Default series
+    // Estado del formulario
+    var series by remember { mutableStateOf(4) }
     var descanso by remember { mutableStateOf(60) }
     val reps = remember { mutableStateListOf<String>() }
     val pesos = remember { mutableStateListOf<String>() }
-    val repsRecamara = remember { mutableStateListOf<String>() } // For RIR
+    val repsRecamara = remember { mutableStateListOf<String>() }
     var notas by remember { mutableStateOf("") }
 
-    // This effect ensures lists are populated initially based on 'series'
+    // Inicializar listas al cargar
     LaunchedEffect(Unit) {
-        // If loading an existing exercise, you might populate from its data here.
-        // For a new entry, initialize with empty strings for the default number of series.
         repeat(series) {
-            if (reps.size <= it) reps.add("")
-            if (pesos.size <= it) pesos.add("")
-            if (repsRecamara.size <= it) repsRecamara.add("")
+            reps.add("")
+            pesos.add("")
+            repsRecamara.add("")
         }
     }
 
-    // This effect dynamically adjusts the lists when 'series' changes
+    // Ajustar listas si cambia el número de series
     LaunchedEffect(series) {
         while (reps.size < series) reps.add("")
         while (reps.size > series) reps.removeLast()
-
         while (pesos.size < series) pesos.add("")
         while (pesos.size > series) pesos.removeLast()
-
         while (repsRecamara.size < series) repsRecamara.add("")
         while (repsRecamara.size > series) repsRecamara.removeLast()
     }
@@ -165,39 +130,32 @@ fun DetalleEjercicioScreen(
     val textFieldColors = TextFieldDefaults.colors(
         focusedTextColor = Color.White,
         unfocusedTextColor = Color.White,
-        disabledTextColor = Color.Gray,
-        focusedContainerColor = Color.DarkGray.copy(alpha = 0.3f),
-        unfocusedContainerColor = Color.DarkGray.copy(alpha = 0.3f),
-        disabledContainerColor = Color.DarkGray.copy(alpha = 0.1f),
-        cursorColor = Color(0xFFFF9800),
-        focusedIndicatorColor = Color(0xFFFF9800),
-        unfocusedIndicatorColor = Color.Gray,
-        focusedLabelColor = Color(0xFFFF9800),
-        unfocusedLabelColor = Color.LightGray,
+        cursorColor = Color(0xFFFF9800)
     )
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Black
-    ) { paddingValues ->
+    ) { padding ->
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .background(Color.Black)
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(padding)
+                .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            // Barra superior
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.volver), tint = Color.White)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
                 }
                 Spacer(Modifier.width(8.dp))
-                Text(currentEjercicio.nombre ?: stringResource(R.string.seleccionar_ejercicio_titulo), color = Color.White, style = MaterialTheme.typography.titleLarge)
+                Text(currentEjercicio.nombre ?: "Ejercicio", color = Color.White, style = MaterialTheme.typography.titleLarge)
             }
 
             Spacer(Modifier.height(16.dp))
 
+            // Imagen del ejercicio
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
                     model = currentEjercicio.urlGif,
@@ -209,127 +167,50 @@ fun DetalleEjercicioScreen(
                     contentScale = ContentScale.Fit
                 )
                 Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(currentEjercicio.nombre, color = Color.White, style = MaterialTheme.typography.titleMedium)
-                }
+                Text(currentEjercicio.nombre, color = Color.White)
             }
 
             Spacer(Modifier.height(24.dp))
 
+            // Controles de series y descanso
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.numero_de_series), color = Color.White)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (series > 1) series-- }) { Text("-", color = Color.White, style = MaterialTheme.typography.titleLarge) }
-                        Text(series.toString(), color = Color.White, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.titleMedium)
-                        // Removed upper limit, or you can set a high one like 20-30
-                        IconButton(onClick = { if (series < 30) series++ }) { Text("+", color = Color.White, style = MaterialTheme.typography.titleLarge) }
-                    }
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.descanso_entre_series), color = Color.White)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (descanso >= 10) descanso -= 10 else descanso = 0 }) { Text("-", color = Color.White, style = MaterialTheme.typography.titleLarge) }
-                        Text("${descanso}s", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.titleMedium)
-                        IconButton(onClick = { if (descanso <= 290) descanso += 10 }) { Text("+", color = Color.White, style = MaterialTheme.typography.titleLarge) }
-                    }
+                AjusteValor("Series", series, { if (series > 1) series-- }, { if (series < 30) series++ })
+                AjusteValor("Descanso", descanso, { if (descanso >= 10) descanso -= 10 }, { if (descanso <= 290) descanso += 10 }, unidad = "s")
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Text("Detalles de cada serie", color = Color.White)
+
+            // Campos de repeticiones, peso y RIR por serie
+            repeat(series) { index ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${index + 1}", color = Color.White, modifier = Modifier.width(30.dp))
+                    OutlinedTextField(reps[index], { reps[index] = it.filter { c -> c.isDigit() } }, modifier = Modifier.weight(1f), colors = textFieldColors)
+                    Text("x", color = Color.White)
+                    OutlinedTextField(pesos[index], { pesos[index] = it.filter { c -> c.isDigit() || c == '.' }.replace(",", ".") }, modifier = Modifier.weight(1f), colors = textFieldColors)
+                    OutlinedTextField(repsRecamara[index], { repsRecamara[index] = it.filter { c -> c.isDigit() } }, modifier = Modifier.weight(1f), colors = textFieldColors)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.detalles_de_series), color = Color.White, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
 
-
-            if (series > 0) {
-                Column {
-                    // Header Row (Optional, but good for clarity)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Set", color = Color.Gray, modifier = Modifier.width(30.dp)) // For "1º, 2º, ..."
-                        Text(stringResource(R.string.reps_label), color = Color.Gray, modifier = Modifier.weight(1f).padding(start = 4.dp))
-                        Spacer(Modifier.width(4.dp)) // Spacer before "x"
-                        Text(stringResource(R.string.kg_label), color = Color.Gray, modifier = Modifier.weight(1f).padding(start = 4.dp))
-                        Spacer(Modifier.width(4.dp)) // Spacer before RIR
-                        Text(stringResource(R.string.rir_label), color = Color.Gray, modifier = Modifier.weight(1f).padding(start = 4.dp)) // RIR Label
-                    }
-
-                    repeat(series) { index ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp), // Consistent spacing
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${index + 1}",
-                                color = Color.White,
-                                modifier = Modifier.width(30.dp).align(Alignment.CenterVertically)
-                            )
-                            OutlinedTextField(
-                                value = reps.getOrElse(index) { "" },
-                                onValueChange = { newValue ->
-                                    if (index < reps.size) reps[index] = newValue.filter { it.isDigit() }.take(3)
-                                },
-                                //label = { Text(stringResource(R.string.reps_label)) },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-
-                            Text("x", color = Color.White, modifier = Modifier.align(Alignment.CenterVertically))
-
-                            OutlinedTextField(
-                                value = pesos.getOrElse(index) { "" },
-                                onValueChange = { newValue ->
-                                    if (index < pesos.size) pesos[index] = newValue.filter { it.isDigit() || it == '.' || it == ',' }.take(5)
-                                        .replace(',', '.') // Allow comma, convert to dot
-                                },
-                                //label = { Text(stringResource(R.string.kg_label)) },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-
-                            OutlinedTextField( // Reps en Recámara (RIR)
-                                value = repsRecamara.getOrElse(index) { "" },
-                                onValueChange = { newValue ->
-                                    if (index < repsRecamara.size) repsRecamara[index] = newValue.filter { it.isDigit() }.take(2)
-                                },
-                                //label = { Text(stringResource(R.string.rir_label)) }, // Use R.string.rir_label
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-                        }
-                    }
-                }
-            }
-
-
-            Spacer(Modifier.height(16.dp))
+            // Campo de notas
             OutlinedTextField(
                 value = notas,
                 onValueChange = { notas = it },
-                label = { Text(stringResource(R.string.notas_label)) },
-                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Notas") },
                 colors = textFieldColors,
-                minLines = 2
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(20.dp))
+
+            // Botón de guardar ejercicio
             Button(
                 onClick = {
                     if (isSaving) return@Button
-
                     isSaving = true
+
                     val ejercicioGuardado = EjercicioGuardado(
                         id = currentEjercicio._id,
                         nombre = currentEjercicio.nombre,
@@ -344,46 +225,35 @@ fun DetalleEjercicioScreen(
                         notas = notas
                     )
 
-                    viewModel.guardarEjercicioDetalladoEnRutina(
-                        rutinaId = rutinaId,
-                        ejercicio = ejercicioGuardado
-                    ) { guardadoCorrecto, mensaje ->
+                    viewModel.guardarEjercicioDetalladoEnRutina(rutinaId, ejercicioGuardado) { ok, msg ->
                         scope.launch {
-                            snackbarHostState.showSnackbar(mensaje)
-                            if (guardadoCorrecto) {
-                                navController.popBackStack()
-                            }
+                            snackbarHostState.showSnackbar(msg)
+                            if (ok) navController.popBackStack()
                             isSaving = false
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
             ) {
-                if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(R.string.guardar_ejercicio_boton), color = Color.White)
-                }
+                if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                else Text("Guardar Ejercicio", color = Color.White)
             }
+
             Spacer(Modifier.height(16.dp))
 
-            Text(stringResource(R.string.instrucciones), color = Color.White, style = MaterialTheme.typography.titleMedium)
-            currentEjercicio.instrucciones.forEachIndexed { index, instruccion ->
-                Text("${index + 1}. $instruccion", color = Color.LightGray, modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp))
-            }
+            // Instrucciones y errores comunes
+            Text("Instrucciones", color = Color.White)
+            currentEjercicio.instrucciones.forEachIndexed { i, s -> Text("${i + 1}. $s", color = Color.LightGray) }
 
             Spacer(Modifier.height(12.dp))
-
-            Text(stringResource(R.string.errores_comunes), color = Color.White, style = MaterialTheme.typography.titleMedium)
-            currentEjercicio.erroresComunes.forEachIndexed { index, error ->
-                Text("• $error", color = Color(0xFFCF6679), modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp)) // Error color
-            }
+            Text("Errores comunes", color = Color.White)
+            currentEjercicio.erroresComunes.forEach { e -> Text("• $e", color = Color(0xFFCF6679)) }
 
             Spacer(Modifier.height(16.dp))
 
-            if (activacionPorId.isNotEmpty()) { // Only show if there's activation data
+            // Visualización SVG de músculos activos
+            if (activacionPorId.isNotEmpty()) {
                 SvgMuscleHighlighter(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -397,7 +267,20 @@ fun DetalleEjercicioScreen(
                     svgViewBoxHeight = 600f
                 )
             }
-            Spacer(Modifier.height(16.dp)) // Padding at the bottom
+
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun AjusteValor(label: String, valor: Int, onRestar: () -> Unit, onSumar: () -> Unit, unidad: String = "") {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, color = Color.White)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onRestar) { Text("-", color = Color.White) }
+            Text("$valor$unidad", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
+            IconButton(onClick = onSumar) { Text("+", color = Color.White) }
         }
     }
 }

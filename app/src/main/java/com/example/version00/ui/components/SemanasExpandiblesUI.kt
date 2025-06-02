@@ -2,13 +2,7 @@ package com.example.version00.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -21,6 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Lista expandible que muestra las rutinas semanales.
+ * Al pulsar una semana, se despliegan las sesiones correspondientes.
+ */
 @Composable
 fun SemanasExpandiblesUI() {
     val semanas = listOf(
@@ -30,17 +28,19 @@ fun SemanasExpandiblesUI() {
         "Semana 4" to listOf("Resistencia Cardio", "Fuerza Explosiva")
     )
 
-    val expandida = remember { mutableStateOf<String?>(null) }
+    val expandida = remember { mutableStateOf<String?>(null) } // Controla qué semana está expandida
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         semanas.forEach { (titulo, sesiones) ->
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Cabecera plegable
+
+                // Cabecera de cada semana (expandible)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            // Alterna entre expandir y contraer
                             expandida.value = if (expandida.value == titulo) null else titulo
                         }
                         .padding(vertical = 12.dp)
@@ -52,12 +52,15 @@ fun SemanasExpandiblesUI() {
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        imageVector = if (expandida.value == titulo) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        imageVector = if (expandida.value == titulo)
+                            Icons.Default.KeyboardArrowUp
+                        else Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
                         tint = Color.White
                     )
                 }
 
+                // Si la semana está expandida, muestra sus sesiones
                 if (expandida.value == titulo) {
                     sesiones.forEach { sesion ->
                         Box(
@@ -74,7 +77,6 @@ fun SemanasExpandiblesUI() {
                             )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-
                     }
                 }
             }

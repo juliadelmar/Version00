@@ -18,6 +18,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 
+/**
+ * Composable que visualiza fatiga muscular sobre una figura SVG renderizada encima
+ * de una imagen de fondo (generalmente el cuerpo humano).
+ *
+ * Dibuja cada músculo o región con un color distinto según su nivel de fatiga.
+ *
+ * @param modifier Modificador externo para el componente.
+ * @param backgroundImageRes Recurso de imagen de fondo (ej: cuerpo humano base).
+ * @param svgImageRes Recurso XML con el SVG vectorial a dibujar (paths con ids).
+ * @param fatigaPorId Mapa de IDs de músculos → valores de fatiga (0.0 a 5.0 aprox).
+ * @param svgViewBoxWidth Ancho del viewBox original del SVG (normalmente definido en XML).
+ * @param svgViewBoxHeight Alto del viewBox original del SVG.
+ */
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun SvgFatigueHighlighter(
@@ -29,14 +42,18 @@ fun SvgFatigueHighlighter(
     svgViewBoxHeight: Float,
 ) {
     val context = LocalContext.current
+
+    // Parseamos el archivo vectorial XML solo una vez por recurso
     val svgParts = remember(svgImageRes, context) {
         if (svgImageRes != 0) {
-            val parts = parseVectorDrawableFile(context, svgImageRes)
-            parts
+            parseVectorDrawableFile(context, svgImageRes)
         } else emptyList()
     }
 
+    // Contenedor que escala los paths y posiciona la imagen
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+
+        // Imagen de fondo
         Image(
             painter = painterResource(id = backgroundImageRes),
             contentDescription = "Fondo",
@@ -46,6 +63,7 @@ fun SvgFatigueHighlighter(
             contentScale = ContentScale.Fit
         )
 
+        // Dibujo del SVG por regiones, coloreadas según fatiga
         if (svgParts.isNotEmpty()) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val canvasWidth = size.width
@@ -53,6 +71,7 @@ fun SvgFatigueHighlighter(
 
                 if (svgViewBoxWidth <= 0f || svgViewBoxHeight <= 0f) return@Canvas
 
+                // Escalado proporcional
                 val scaleX = canvasWidth / svgViewBoxWidth
                 val scaleY = canvasHeight / svgViewBoxHeight
                 val finalScale = minOf(scaleX, scaleY)
@@ -61,19 +80,23 @@ fun SvgFatigueHighlighter(
                 val scaledSvgHeight = svgViewBoxHeight * finalScale
                 val offsetX = (canvasWidth - scaledSvgWidth) / 2f
                 val offsetY = (canvasHeight - scaledSvgHeight) / 2f
+
+                // Ajustes de alineación para que coincida visualmente con el cuerpo
                 val extraShiftRight = 56f
-                val extraShiftDown = 12f // 18 - 30dp = -12f para subir el SVG 0.8 cm
+                val extraShiftDown = 12f
 
                 translate(left = offsetX + extraShiftRight, top = offsetY + extraShiftDown) {
                     scale(scale = finalScale) {
                         svgParts.forEach { part ->
                             val fatiga = fatigaPorId[part.id] ?: 0.0
+
+                            // Asignación de color según nivel de fatiga
                             val color = when {
-                                fatiga >= 4.0 -> Color.Red.copy(alpha = 0.7f) // Muy fatigado
-                                fatiga >= 2.5 -> Color.Yellow.copy(alpha = 0.7f) // En recuperación
-                                fatiga >= 1.0 -> Color.Green.copy(alpha = 0.6f) // Recuperado
-                                fatiga > 0.0 -> Color.Cyan.copy(alpha = 0.5f) // Débil pero funcional
-                                else -> Color.Gray.copy(alpha = 0.3f) // Sin datos
+                                fatiga >= 4.0 -> Color.Red.copy(alpha = 0.7f)        // Muy fatigado
+                                fatiga >= 2.5 -> Color.Yellow.copy(alpha = 0.7f)     // En recuperación
+                                fatiga >= 1.0 -> Color.Green.copy(alpha = 0.6f)      // Recuperado
+                                fatiga > 0.0  -> Color.Cyan.copy(alpha = 0.5f)       // Ligeramente activo
+                                else -> Color.Gray.copy(alpha = 0.3f)                // Sin datos
                             }
 
                             drawPath(

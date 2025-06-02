@@ -14,20 +14,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Indicador circular de progreso con un porcentaje en el centro.
+ *
+ * @param progress Valor del progreso entre 0f y 1f (por defecto 70%).
+ */
 @Composable
 fun CircularProgress(progress: Float = 0.7f) {
     val porcentaje = (progress * 100).toInt()
 
     Box(
-        contentAlignment = Alignment.Center,
-
+        contentAlignment = Alignment.Center, // Centra el texto dentro del círculo
     ) {
+        // Círculo de progreso
         CircularProgressIndicator(
             progress = progress,
-            strokeWidth = 6.dp, // más fino
-            color = Color(0xFFB39DDB),
-            backgroundColor = Color(0xFF2B1F30)
+            strokeWidth = 6.dp,
+            color = Color(0xFFB39DDB),          // Color del progreso
+            backgroundColor = Color(0xFF2B1F30) // Color del fondo del círculo
         )
+
+        // Texto con el porcentaje en el centro
         Text(
             text = "$porcentaje%",
             color = Color.White,

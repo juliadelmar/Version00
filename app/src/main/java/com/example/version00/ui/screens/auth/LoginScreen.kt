@@ -1,27 +1,11 @@
 package com.example.version00.ui.screens.auth
 
-
+// Imports necesarios para la interfaz, manejo de estado, navegación, estilos y recursos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -32,25 +16,29 @@ import androidx.navigation.NavHostController
 import com.example.version00.R
 import com.example.version00.ui.viewmodel.AuthViewModel
 
+// Composable principal para la pantalla de Login
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit,
-    navController: NavHostController
+    viewModel: AuthViewModel,         // ViewModel de autenticación
+    onLoginSuccess: () -> Unit,       // Acción al iniciar sesión con éxito
+    navController: NavHostController  // Controlador de navegación para ir a otras pantallas
 ) {
+    // Estados locales para capturar el input del usuario
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    // Si el usuario ya está logueado, redirigimos automáticamente
     if (viewModel.isLoggedIn) {
         onLoginSuccess()
     }
 
+    // Contenedor general
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Black) // Fondo negro para estética espacial
     ) {
-        // Imagen de fondo de estrellas
+        // Imagen de fondo con estrellas
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.stars_with_transparency),
             contentDescription = "Fondo estrellas",
@@ -58,14 +46,14 @@ fun LoginScreen(
             contentScale = ContentScale.Crop
         )
 
-        // Contenido con margen lateral
+        // Contenido central vertical
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo
+            // Logo de la app en el centro superior
             androidx.compose.foundation.Image(
                 painter = painterResource(id = R.drawable.syntra_icon),
                 contentDescription = "Logo Syntra",
@@ -75,7 +63,7 @@ fun LoginScreen(
                     .align(androidx.compose.ui.Alignment.CenterHorizontally)
             )
 
-            // Bienvenida
+            // Mensaje de bienvenida
             Text(
                 text = "Bienvenida a Syntra",
                 style = MaterialTheme.typography.headlineMedium,
@@ -85,7 +73,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Email
+            // Campo de entrada para el email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -102,7 +90,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Contraseña
+            // Campo de entrada para la contraseña, con ocultación de caracteres
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -120,9 +108,9 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón
+            // Botón para iniciar sesión
             Button(
-                onClick = { viewModel.login(email, password) },
+                onClick = { viewModel.login(email, password) }, // Llama al método del ViewModel
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Entrar")
@@ -130,7 +118,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Registro
+            // Texto clickeable que navega a la pantalla de registro
             Text(
                 text = "¿No tienes cuenta? Regístrate",
                 color = Color(0xFFB39DDB),
@@ -139,6 +127,7 @@ fun LoginScreen(
                     .padding(top = 8.dp)
             )
 
+            // Si hay error en el login, mostrar el mensaje
             viewModel.errorMessage?.let {
                 Text(it, color = Color.Red)
             }

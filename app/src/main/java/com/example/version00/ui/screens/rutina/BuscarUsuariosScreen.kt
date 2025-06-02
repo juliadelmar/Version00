@@ -1,6 +1,8 @@
+// BuscarUsuariosScreen.kt
+// Pantalla para buscar otros usuarios registrados y enviarles solicitudes de amistad.
+
 package com.example.version00.ui.screens.rutina
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,14 +39,18 @@ fun BuscarUsuariosScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
 
-    var query by remember { mutableStateOf("") }
-    var todosLosUsuarios by remember { mutableStateOf<List<Usuario>>(emptyList()) }
-    var resultados by remember { mutableStateOf<List<Usuario>>(emptyList()) }
-    var usuarioActual by remember { mutableStateOf<Usuario?>(null) }
+    // ░░░ ESTADOS ░░░
+    var query by remember { mutableStateOf("") }                     // Búsqueda por nombre
+    var todosLosUsuarios by remember { mutableStateOf(emptyList<Usuario>()) } // Lista completa de usuarios (excepto el actual)
+    var resultados by remember { mutableStateOf(emptyList<Usuario>()) }       // Resultados filtrados
+    var usuarioActual by remember { mutableStateOf<Usuario?>(null) }         // Datos del usuario logueado
 
-    // ✅ Obtener datos del usuario actual desde Firebase Realtime
+    // ░░░ EFECTO: CARGA INICIAL ░░░
+    // Cargamos al usuario actual y la lista de usuarios registrados desde Firebase
     LaunchedEffect(Unit) {
         val uid = auth.currentUser?.uid ?: return@LaunchedEffect
+
+        // 🔄 Obtener datos del usuario actual (nombre, email, avatar)
         FirebaseDatabase.getInstance().getReference("usuarios").child(uid)
             .get()
             .addOnSuccessListener { snap ->
@@ -54,6 +60,7 @@ fun BuscarUsuariosScreen(
                 usuarioActual = Usuario(uid, nombre, email, avatarUrl)
             }
 
+        // 📦 Obtener todos los usuarios (excluyendo al actual)
         viewModel.obtenerTodosLosUsuarios { lista ->
             val filtrados = lista.filter { it.uid != uid }
             todosLosUsuarios = filtrados
@@ -61,11 +68,13 @@ fun BuscarUsuariosScreen(
         }
     }
 
+    // ░░░ UI PRINCIPAL ░░░
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // 🔍 Campo de búsqueda
         OutlinedTextField(
             value = query,
             onValueChange = {
@@ -73,8 +82,8 @@ fun BuscarUsuariosScreen(
                 resultados = if (query.isBlank()) {
                     todosLosUsuarios
                 } else {
-                    todosLosUsuarios.filter {
-                        it.nombre.contains(query, ignoreCase = true)
+                    todosLosUsuarios.filter { u ->
+                        u.nombre.contains(query, ignoreCase = true)
                     }
                 }
             },
@@ -84,6 +93,7 @@ fun BuscarUsuariosScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // 🧾 Lista de resultados
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(resultados) { usuario ->
                 Card(
@@ -96,6 +106,7 @@ fun BuscarUsuariosScreen(
                             .padding(12.dp)
                             .fillMaxWidth()
                     ) {
+                        // 🖼 Avatar
                         AsyncImage(
                             model = usuario.avatarUrl,
                             contentDescription = usuario.nombre,
@@ -109,11 +120,13 @@ fun BuscarUsuariosScreen(
 
                         Spacer(modifier = Modifier.width(12.dp))
 
+                        // 🧑 Nombre y email
                         Column(modifier = Modifier.weight(1f)) {
                             Text(usuario.nombre, style = MaterialTheme.typography.titleMedium)
                             Text(usuario.email, style = MaterialTheme.typography.bodySmall)
                         }
 
+                        // ➕ Botón para añadir amigo
                         Button(
                             onClick = {
                                 usuarioActual?.let { actual ->

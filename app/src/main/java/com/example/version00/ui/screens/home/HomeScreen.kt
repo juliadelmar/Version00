@@ -23,17 +23,30 @@ import com.example.version00.R
 import com.example.version00.ui.components.BottomBarSyntra
 import com.example.version00.ui.components.TopBarSyntra
 import com.example.version00.ui.viewmodel.AuthViewModel
+
+/**
+ * Pantalla principal de inicio (HomeScreen) que gestiona la navegación inferior y superior,
+ * y muestra contenido según la pestaña seleccionada.
+ *
+ * @param viewModel ViewModel que maneja la autenticación y carga del usuario.
+ * @param navController Controlador de navegación para mover entre pantallas.
+ */
 @Composable
 fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
+    // Índice actual seleccionado en la barra inferior
     val selectedIndex = remember { mutableStateOf(0) }
+
+    // URL del avatar del usuario
     var avatarUrl by remember { mutableStateOf("") }
 
+    // Carga los datos del usuario al entrar en pantalla
     LaunchedEffect(Unit) {
         viewModel.cargarDatosUsuario { _, _, url ->
             avatarUrl = url
         }
     }
 
+    // Scaffold con barra superior e inferior
     Scaffold(
         topBar = {
             TopBarSyntra(avatarUrl = avatarUrl) {
@@ -49,6 +62,7 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                 .background(Color.Black)
                 .padding(innerPadding)
         ) {
+            // Fondo de estrellas
             Image(
                 painter = painterResource(id = R.drawable.stars_with_transparency),
                 contentDescription = "Fondo Estrellas",
@@ -58,14 +72,14 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                     .alpha(0.5f)
             )
 
+            // Contenido según la pestaña seleccionada
             when (selectedIndex.value) {
                 0 -> ContentBoxHome(
                     navController = navController,
                     onNavigateToTraining = {
-                        navController.navigate("training/1") // Cambia esto si tienes ID dinámico
+                        navController.navigate("training/1") // Puedes adaptar este ID dinámicamente
                     }
                 )
-
             }
         }
     }
