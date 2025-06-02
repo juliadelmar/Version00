@@ -1,13 +1,12 @@
-package com.example.version00.ui.data // O el paquete donde quieras que esté
+package com.example.version00.ui.data
 
-// Importa Fill explícitamente si quieres ser muy claro
+import androidx.compose.runtime.Composable
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,14 +18,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 
-
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun SvgMuscleHighlighter(
+fun SvgFatigueHighlighter(
     modifier: Modifier = Modifier,
     backgroundImageRes: Int,
     svgImageRes: Int,
-    activacionPorId: Map<String, Int>,
+    fatigaPorId: Map<String, Double>,
     svgViewBoxWidth: Float,
     svgViewBoxHeight: Float,
 ) {
@@ -34,7 +32,6 @@ fun SvgMuscleHighlighter(
     val svgParts = remember(svgImageRes, context) {
         if (svgImageRes != 0) {
             val parts = parseVectorDrawableFile(context, svgImageRes)
-            parts.forEach { Log.d("SVG_DEBUG", "ID disponible: ${it.id}") }
             parts
         } else emptyList()
     }
@@ -44,7 +41,7 @@ fun SvgMuscleHighlighter(
             painter = painterResource(id = backgroundImageRes),
             contentDescription = "Fondo",
             modifier = Modifier
-                .fillMaxSize(0.85f)
+                .fillMaxSize(0.83f)
                 .align(Alignment.TopCenter),
             contentScale = ContentScale.Fit
         )
@@ -54,10 +51,7 @@ fun SvgMuscleHighlighter(
                 val canvasWidth = size.width
                 val canvasHeight = size.height
 
-                if (svgViewBoxWidth <= 0f || svgViewBoxHeight <= 0f) {
-                    Log.e("SvgHighlighter", "svgViewBoxWidth or svgViewBoxHeight is zero or negative. Cannot scale.")
-                    return@Canvas
-                }
+                if (svgViewBoxWidth <= 0f || svgViewBoxHeight <= 0f) return@Canvas
 
                 val scaleX = canvasWidth / svgViewBoxWidth
                 val scaleY = canvasHeight / svgViewBoxHeight
@@ -67,19 +61,21 @@ fun SvgMuscleHighlighter(
                 val scaledSvgHeight = svgViewBoxHeight * finalScale
                 val offsetX = (canvasWidth - scaledSvgWidth) / 2f
                 val offsetY = (canvasHeight - scaledSvgHeight) / 2f
-                val extraShiftRight = 62f
-                val extraShiftDown = 18f
+                val extraShiftRight = 56f
+                val extraShiftDown = 12f // 18 - 30dp = -12f para subir el SVG 0.8 cm
 
                 translate(left = offsetX + extraShiftRight, top = offsetY + extraShiftDown) {
                     scale(scale = finalScale) {
                         svgParts.forEach { part ->
-                            val activacion = activacionPorId[part.id] ?: 0
+                            val fatiga = fatigaPorId[part.id] ?: 0.0
                             val color = when {
-                                activacion >= 50 -> Color.Red.copy(alpha = 0.7f)
-                                activacion >= 33 -> Color.Green.copy(alpha = 0.7f)
-                                activacion > 0 -> Color.LightGray.copy(alpha = 0.7f)
-                                else -> Color.Gray.copy(alpha = 0.3f)
+                                fatiga >= 4.0 -> Color.Red.copy(alpha = 0.7f) // Muy fatigado
+                                fatiga >= 2.5 -> Color.Yellow.copy(alpha = 0.7f) // En recuperación
+                                fatiga >= 1.0 -> Color.Green.copy(alpha = 0.6f) // Recuperado
+                                fatiga > 0.0 -> Color.Cyan.copy(alpha = 0.5f) // Débil pero funcional
+                                else -> Color.Gray.copy(alpha = 0.3f) // Sin datos
                             }
+
                             drawPath(
                                 path = part.composePath,
                                 color = color,
@@ -88,10 +84,6 @@ fun SvgMuscleHighlighter(
                         }
                     }
                 }
-            }
-        } else {
-            if (svgImageRes != 0) {
-                Log.w("SvgHighlighter", "No SVG parts to draw for resource ID $svgImageRes.")
             }
         }
     }

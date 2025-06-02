@@ -391,7 +391,7 @@ fun DetalleEjercicioScreen(
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.DarkGray.copy(alpha = 0.3f)),
                     backgroundImageRes = R.drawable.cuerpo_frente,
-                    svgImageRes = R.drawable._cuerpo_delantero, // Ensure this SVG path is correct
+                    svgImageRes = R.drawable._cuerpo_delantero,
                     activacionPorId = activacionPorId,
                     svgViewBoxWidth = 300f,
                     svgViewBoxHeight = 600f

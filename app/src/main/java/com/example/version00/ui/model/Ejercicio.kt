@@ -38,3 +38,10 @@ data class SerieEjercicio(
     val repeticiones: Int = 0,
     val peso: Float = 0f
 )
+data class EstadisticasEntrenamiento(
+    var series: Int = 0,
+    var reps: Int = 0,
+    var ejercicios: Int = 0,
+    var carga: Float = 0f,
+    var calorias: Int = 0
+)

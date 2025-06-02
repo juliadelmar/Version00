@@ -59,8 +59,8 @@ fun BottomBarSyntra(selectedIndex: MutableState<Int>, navController: NavHostCont
                     when (index) {
                         0 -> navController.navigate("home")
                         1 -> navController.navigate("actividades")
-                        2 -> {} // Explorar
-                        3 -> {} // Ejercicios
+                        2 -> navController.navigate("regla")
+                        3 -> navController.navigate("amigos")
                         4 -> navController.navigate("cuerpo")// Cuerpo
                     }
                 },

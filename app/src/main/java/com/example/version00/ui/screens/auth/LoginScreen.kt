@@ -44,11 +44,7 @@ fun LoginScreen(
     if (viewModel.isLoggedIn) {
         onLoginSuccess()
     }
-    LaunchedEffect(Unit) {
-        viewModel.verificarSesionActiva {
-            onLoginSuccess() // Navega a Home directamente
-        }
-    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

@@ -1,5 +1,7 @@
 package com.example.version00.ui.screens.configuration
 
+import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -20,12 +23,19 @@ import coil.compose.AsyncImage
 import com.example.version00.ui.components.ButtomSalir
 import com.example.version00.ui.theme.Indices
 import com.example.version00.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostController) {
     var avatarUrl by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    val savedTheme = sharedPref.getString("app_theme", "system") ?: "system"
+    var currentTheme by remember { mutableStateOf(savedTheme) }
+    val scope = rememberCoroutineScope()
 
     // Cargar datos del usuario
     LaunchedEffect(Unit) {
@@ -39,10 +49,9 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        // TopBar
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -50,15 +59,14 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Atrás",
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .clickable { navController.popBackStack() }
                     .padding(end = 8.dp)
             )
-            Text("Mi Cuenta", fontSize = 20.sp, color = Color.White)
+            Text("Mi Cuenta", fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
         }
 
-        // Perfil
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -74,49 +82,46 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(nombre, color = Color.White, fontSize = 18.sp)
+                Text(nombre, color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp)
                 Text(email, color = Color.Gray, fontSize = 14.sp)
             }
         }
 
-        // Tarjetas moradas
+        Text("Tema de la aplicación", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
 
-         Box(
+        listOf("light", "dark").forEach { themeOption ->
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .background(color = Indices, shape = RoundedCornerShape(20.dp))
-                    .padding(8.dp)
-                    .padding(bottom = 16.dp)
-            )
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        currentTheme = themeOption
+                        scope.launch {
+                            sharedPref.edit().putString("app_theme", themeOption).apply()
+                            (context as? ComponentActivity)?.recreate() // Recarga la actividad para aplicar el tema
+                        }
+                    },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Indices)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = currentTheme == themeOption,
+                        onClick = null
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (themeOption == "light") "Claro" else "Oscuro",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
 
-
-
-        Spacer(modifier = Modifier.height(30.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .background(color = Indices, shape = RoundedCornerShape(20.dp))
-                .padding(8.dp)
-                .padding(bottom = 16.dp)
-        )
-
-
-
-        Spacer(modifier = Modifier.height(30.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .background(color = Indices, shape = RoundedCornerShape(20.dp))
-                .padding(8.dp)
-                .padding(bottom = 16.dp)
-        )
-
-
-
-        Spacer(modifier = Modifier.height(30.dp))
         Spacer(modifier = Modifier.height(30.dp))
         ButtomSalir(navController = navController)
     }

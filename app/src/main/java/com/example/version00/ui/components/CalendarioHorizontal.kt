@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,7 +66,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -85,7 +86,7 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
                 Text(
                     text = selectedMonth.name.take(3).lowercase(Locale.getDefault())
                         .replaceFirstChar { it.titlecase(Locale.getDefault()) },
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 18.sp,
                     textAlign = TextAlign.Center
                 )
@@ -127,14 +128,14 @@ fun CalendarioHorizontal(diasConEjercicio: List<LocalDate>) {
 
                     Text(
                         text = date.dayOfMonth.toString(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 22.sp,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es")),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
                     )

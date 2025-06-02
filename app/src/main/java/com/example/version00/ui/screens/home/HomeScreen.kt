@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +23,6 @@ import com.example.version00.R
 import com.example.version00.ui.components.BottomBarSyntra
 import com.example.version00.ui.components.TopBarSyntra
 import com.example.version00.ui.viewmodel.AuthViewModel
-
 @Composable
 fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
     val selectedIndex = remember { mutableStateOf(0) }
@@ -40,8 +40,8 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                 navController.navigate("configuration")
             }
         },
-        bottomBar = { BottomBarSyntra(selectedIndex, navController) }, // 👈 Aquí
-        backgroundColor = Color.Transparent
+        bottomBar = { BottomBarSyntra(selectedIndex, navController) },
+        backgroundColor = MaterialTheme.colors.onBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -58,16 +58,14 @@ fun HomeScreen(viewModel: AuthViewModel, navController: NavHostController) {
                     .alpha(0.5f)
             )
 
-            // Solo muestra "home" si el índice es 0
-            if (selectedIndex.value == 0) {
-                ContentBoxHome(
+            when (selectedIndex.value) {
+                0 -> ContentBoxHome(
+                    navController = navController,
                     onNavigateToTraining = {
-                        navController.navigate("training/1") // ejemplo, usar ID real
-                    },
-                    onRutinaClick = { rutina ->
-                        navController.navigate("rutinaDetail/${rutina.id}")
+                        navController.navigate("training/1") // Cambia esto si tienes ID dinámico
                     }
                 )
+
             }
         }
     }

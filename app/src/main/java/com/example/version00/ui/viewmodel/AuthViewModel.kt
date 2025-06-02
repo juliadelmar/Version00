@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
 
 class AuthViewModel : ViewModel() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -29,28 +30,28 @@ class AuthViewModel : ViewModel() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@addOnCompleteListener
-
                     val iniciales = obtenerIniciales(nombre)
                     val avatarUrl = generarUrlAvatar(iniciales)
 
-                    val userData = mapOf(
-                        "nombre" to nombre,
-                        "email" to email,
-                        "avatarUrl" to avatarUrl
-                    )
+                    FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+                        val userData = mapOf(
+                            "nombre" to nombre,
+                            "email" to email,
+                            "avatarUrl" to avatarUrl,
+                            "fcmToken" to token // ✅ Guardamos el token aquí
+                        )
 
-                    FirebaseDatabase.getInstance().getReference("usuarios")
-                        .child(uid)
-                        .setValue(userData)
-                        .addOnSuccessListener {
-                            Log.d("Register", "Datos guardados con éxito")
-                            onSuccess() // ✅ Navegar a HomeScreen
-                        }
-                        .addOnFailureListener {
-                            errorMessage = "Error al guardar datos: ${it.message}"
-                            Log.e("Register", "Error: ${it.message}", it)
-                        }
-
+                        FirebaseDatabase.getInstance().getReference("usuarios")
+                            .child(uid)
+                            .setValue(userData)
+                            .addOnSuccessListener {
+                                Log.d("Register", "Datos + token guardados")
+                                onSuccess()
+                            }
+                            .addOnFailureListener {
+                                errorMessage = "Error al guardar: ${it.message}"
+                            }
+                    }
                 } else {
                     errorMessage = "Registro fallido: ${task.exception?.message}"
                 }
@@ -66,11 +67,17 @@ class AuthViewModel : ViewModel() {
             onDataLoaded(nombre, email, avatarUrl)
         }
     }
-    fun verificarSesionActiva(onUsuarioActivo: () -> Unit) {
+    fun verificarSesionActiva(
+        onUsuarioActivo: () -> Unit,
+        onNoSesion: () -> Unit
+    ) {
         val usuario = FirebaseAuth.getInstance().currentUser
         if (usuario != null) {
             isLoggedIn = true
             onUsuarioActivo()
+        } else {
+            isLoggedIn = false
+            onNoSesion()
         }
     }
 

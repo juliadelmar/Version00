@@ -1,4 +1,11 @@
 <resources>
+    <string name="mostrar_mas">Mostrar más</string>
+
+    <string name="filtro_equipamiento">Equipamiento</string>
+    <string name="filtro_musculo">Músculo</string>
+    <string name="filtro_dificultad">Dificultad</string>
+    <string name="error_cargar_ejercicios">Error al cargar: %1$s</string>
+    <string name="desconocido">desconocido</string>
     <string name="app_name">Version00</string>
     <string name="welcome">Bienvenida a Syntra</string>
     <string name="email_hint">Correo electrónico</string>

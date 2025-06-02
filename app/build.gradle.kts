@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -59,12 +60,12 @@ android {
 
 dependencies {
     // ✅ ÚNICA versión de Compose: BOM 2023 estable
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
     implementation("androidx.compose.material:material")
+    // Compose BOM (Bill of Materials)
+
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.navigation:navigation-compose:2.7.7")
@@ -73,7 +74,16 @@ dependencies {
     implementation("com.patrykandpatrick.vico:compose:2.1.2")
     implementation("com.patrykandpatrick.vico:compose-m3:2.1.2") // Material 3
  // si usas Material3
-
+    // Para los iconos básicos de Material Design
+    implementation("androidx.compose.material:material-icons-core:1.6.7") // Usa la última versión compatible
+    implementation(platform("androidx.compose:compose-bom:2024.12.00"))
+    implementation("androidx.compose.material3:material3")
+    // Opcional: Para un conjunto extendido de iconos de Material Design
+    implementation("androidx.compose.material:material-icons-extended:1.6.7")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-text")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")// O la última versión estable
 
     // Otros componentes esenciales
     implementation(libs.androidx.core.ktx)
@@ -105,6 +115,10 @@ dependencies {
     implementation(libs.googleid)
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.messaging)
+    implementation(libs.volley)
+    implementation("com.google.firebase:firebase-messaging:23.1.2")
 
     // Tests
     testImplementation(libs.junit)

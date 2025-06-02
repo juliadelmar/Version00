@@ -1,48 +1,28 @@
 package com.example.version00.ui.screens.rutina
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.DismissDirection
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.DismissValue
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.FractionalThreshold
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.rememberDismissState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,26 +40,30 @@ import com.example.version00.ui.model.EjercicioGuardado
 import com.example.version00.ui.navigation.AppDestinations
 import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
 import kotlinx.coroutines.launch
+// ... (otros imports sin cambios)
+import androidx.compose.material.icons.filled.FitnessCenter // Icono alternativo para el título
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun RutinaDetailScreen(
-    rutinaId: Int,
+    rutinaId: Int, // <<--- CAMBIO: Int a String
+    rutinaNombre: String, // El nombre ya se pasa, podemos usarlo en el título
     navController: NavHostController,
     firebaseViewModel: RutinaFirebaseViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val ejerciciosDeRutina = remember { mutableStateListOf<EjercicioGuardado>() }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val contexto = LocalContext.current
+    // val contexto = LocalContext.current // No se usa, se puede quitar si no es necesario para otra cosa
     var isLoading by remember { mutableStateOf(true) }
     var initialLoadDone by remember { mutableStateOf(false) }
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val refreshTrigger = remember { mutableStateOf(false) }
+    val refreshTrigger = remember { mutableStateOf(false) } // Para forzar la recarga
 
     LaunchedEffect(rutinaId, refreshTrigger.value) {
         isLoading = true
+        // Asegúrate que firebaseViewModel.obtenerEjerciciosDeRutina espera un String para rutinaId
         firebaseViewModel.obtenerEjerciciosDeRutina(rutinaId) { listaEjercicios ->
             ejerciciosDeRutina.clear()
             ejerciciosDeRutina.addAll(listaEjercicios)
@@ -88,28 +72,36 @@ fun RutinaDetailScreen(
         }
     }
 
+    // Refrescar si se vuelve de la pantalla de edición/creación de ejercicio
     LaunchedEffect(currentBackStackEntry) {
         val cameFromEdit = currentBackStackEntry?.savedStateHandle?.remove<Boolean>("ejercicio_actualizado_o_creado") == true
         if (cameFromEdit) {
-            refreshTrigger.value = !refreshTrigger.value
+            refreshTrigger.value = !refreshTrigger.value // Cambia el valor para activar el LaunchedEffect de arriba
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Black,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Rutina #$rutinaId") },
+                title = { Text(rutinaNombre.ifBlank { "Detalle de Rutina" }) }, // Usar el nombre de la rutina
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = { // Opcional: añadir un icono o texto que identifique la rutina
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
+                        Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(text="#${rutinaId}...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) // Mostrar parte del ID
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.DarkGray.copy(alpha = 0.3f),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp), // Un poco de elevación
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -117,46 +109,139 @@ fun RutinaDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues) // Aplicar padding del Scaffold
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                if (isLoading && !initialLoadDone) {
+                if (isLoading && !initialLoadDone) { // Mostrar progreso solo en la carga inicial
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color.White)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 } else if (ejerciciosDeRutina.isEmpty() && initialLoadDone) {
-                    Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp), // Más padding
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = "No hay ejercicios en esta rutina",
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
+                            text = "Esta rutina aún no tiene ejercicios.\n¡Añade algunos para empezar!",
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 } else {
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize() // Asegurar que LazyColumn llene el espacio
                     ) {
                         items(ejerciciosDeRutina, key = { it.id }) { ejercicio ->
-                            EjercicioRutinaItem(ejercicio = ejercicio)
+                            val dismissState = rememberDismissState(
+                                confirmStateChange = {
+                                    if (it == DismissValue.DismissedToEnd || it == DismissValue.DismissedToStart) {
+                                        // Acción de borrado aquí, antes de que el item desaparezca visualmente
+                                        // para evitar que se recomponga brevemente en su sitio original
+                                        firebaseViewModel.eliminarEjercicioDeRutina(rutinaId, ejercicio.id) // <<--- Pasar String
+                                        ejerciciosDeRutina.remove(ejercicio) // Actualizar UI inmediatamente
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "${ejercicio.nombre} eliminado",
+                                                withDismissAction = true
+                                            )
+                                        }
+                                        true // Confirmar el cambio de estado
+                                    } else false
+                                }
+                            )
+
+                            // No es necesario el LaunchedEffect aquí si confirmStateChange ya maneja la lógica
+                            // if (dismissState.isDismissed(DismissDirection.EndToStart) ||
+                            //     dismissState.isDismissed(DismissDirection.StartToEnd)
+                            // ) {
+                            //     LaunchedEffect(ejercicio.id) { // Usar ejercicio.id para que se lance solo una vez por item
+                            //         val ejercicioAEliminar = ejerciciosDeRutina.find { it.id == ejercicio.id }
+                            //         if (ejercicioAEliminar != null) {
+                            //             firebaseViewModel.eliminarEjercicioDeRutina(rutinaId, ejercicioAEliminar.id) // <<--- Pasar String
+                            //             ejerciciosDeRutina.remove(ejercicioAEliminar) // Actualizar UI
+                            //             scope.launch {
+                            //                 snackbarHostState.showSnackbar(
+                            //                     message = "${ejercicioAEliminar.nombre} eliminado",
+                            //                     withDismissAction = true
+                            //                 )
+                            //             }
+                            //         }
+                            //     }
+                            // }
+
+                            SwipeToDismiss(
+                                state = dismissState,
+                                directions = setOf(
+                                    DismissDirection.StartToEnd, // Habilitar ambos sentidos si se desea
+                                    DismissDirection.EndToStart
+                                ),
+                                dismissThresholds = { FractionalThreshold(0.4f) }, // Umbral más sensible
+                                background = {
+                                    val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
+                                    val color = when (direction) {
+                                        DismissDirection.StartToEnd -> Color.Red.copy(alpha = 0.7f)
+                                        DismissDirection.EndToStart -> Color.Red.copy(alpha = 0.7f)
+                                        else -> Color.Transparent
+                                    }
+                                    val alignment = when (direction) {
+                                        DismissDirection.StartToEnd -> Alignment.CenterStart
+                                        DismissDirection.EndToStart -> Alignment.CenterEnd
+                                        else -> Alignment.Center
+                                    }
+                                    val icon = Icons.Default.Delete
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color, shape = RoundedCornerShape(12.dp))
+                                            .padding(horizontal = 20.dp),
+                                        contentAlignment = alignment
+                                    ) {
+                                        Icon(icon, contentDescription = "Eliminar", tint = Color.White)
+                                    }
+                                },
+                                dismissContent = {
+                                    EjercicioRutinaItem(
+                                        ejercicio = ejercicio,
+                                        onClick = {
+                                            // Pasar rutinaId como String
+                                            navController.navigate("${AppDestinations.EDIT_EJERCICIO_RUTINA_ROUTE}/$rutinaId/${ejercicio.id}")
+                                        }
+                                    )
+                                }
+                            )
                         }
                     }
                 }
             }
 
-            // BOTONES INFERIORES
-            Column(modifier = Modifier.padding(16.dp)) {
+            // Botones fijos en la parte inferior
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)) // Fondo para separar visualmente
+                    .padding(16.dp)
+            ) {
                 Button(
                     onClick = {
+                        // Pasar rutinaId como String
                         navController.navigate("${AppDestinations.LISTA_EJERCICIOS_ROUTE}/$rutinaId")
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
+                    shape = RoundedCornerShape(12.dp), // Bordes redondeados
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Añadir ejercicio")
+                    Icon(Icons.Default.Add, contentDescription = null) // Content description no es necesario para iconos decorativos si el texto lo explica
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Añadir ejercicio", color = Color.White)
+                    Text("Añadir ejercicio")
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -164,35 +249,46 @@ fun RutinaDetailScreen(
                 Button(
                     onClick = {
                         if (ejerciciosDeRutina.isNotEmpty()) {
+                            // Pasar rutinaId como String
                             navController.navigate("${AppDestinations.TRAINING_ROUTE}/$rutinaId")
                         } else {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Añade ejercicios antes de comenzar.")
+                                snackbarHostState.showSnackbar("Añade ejercicios a la rutina antes de comenzar.")
                             }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = ejerciciosDeRutina.isNotEmpty(), // Deshabilitar si no hay ejercicios
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Comenzar rutina")
+                    Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Comenzar rutina", color = Color.White)
+                    Text("Comenzar rutina")
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-
             }
         }
     }
 }
 
+// ... (EjercicioRutinaItem sin cambios, asumiendo que está bien)
+// El composable EjercicioRutinaItem ya está bien diseñado.
+
 @Composable
-fun EjercicioRutinaItem(ejercicio: EjercicioGuardado) {
+fun EjercicioRutinaItem(
+    ejercicio: EjercicioGuardado,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }, // ✅ CLICK!
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.DarkGray.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -205,14 +301,18 @@ fun EjercicioRutinaItem(ejercicio: EjercicioGuardado) {
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Gray.copy(alpha = 0.3f)),
+                    .background(MaterialTheme.colorScheme.surface),
                 placeholder = painterResource(id = R.drawable.mancuerna_horixontal),
                 error = painterResource(id = R.drawable.ic_mancuerna_oblicua),
                 contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(ejercicio.nombre, color = Color.White, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = ejercicio.nombre,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium
+                )
                 Spacer(modifier = Modifier.height(4.dp))
 
                 val details = buildList {
@@ -224,7 +324,7 @@ fun EjercicioRutinaItem(ejercicio: EjercicioGuardado) {
                 if (details.isNotEmpty()) {
                     Text(
                         text = details.joinToString("  •  "),
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -232,3 +332,4 @@ fun EjercicioRutinaItem(ejercicio: EjercicioGuardado) {
         }
     }
 }
+
