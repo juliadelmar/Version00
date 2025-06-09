@@ -11,6 +11,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.version00.ui.components.RutinaTemporalHolder
+import com.example.version00.ui.model.EjercicioGuardado
 import com.example.version00.ui.screens.SplashScreen
 
 // Importaciones de pantallas
@@ -18,9 +20,16 @@ import com.example.version00.ui.screens.actividades.*
 import com.example.version00.ui.screens.auth.*
 import com.example.version00.ui.screens.configuration.*
 import com.example.version00.ui.screens.cuerpo.*
+import com.example.version00.ui.screens.explorar.ExploreScreen
+import com.example.version00.ui.screens.explorar.NutritionixRetrofitClient
+import com.example.version00.ui.screens.explorar.RetoDetalleScreen
+import com.example.version00.ui.screens.explorar.SupplementViewModel
+import com.example.version00.ui.screens.explorar.SupplementViewModelFactory
 import com.example.version00.ui.screens.home.*
 import com.example.version00.ui.screens.rutina.*
 import com.example.version00.ui.viewmodel.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 import java.time.LocalDate
 import java.time.YearMonth
@@ -41,12 +50,27 @@ object AppDestinations {
     const val CUERPO_ROUTE = "cuerpo"
     const val REGLA_ROUTE = "regla"
     const val AMIGOS_ROUTE = "amigos"
+    const val PREDEFINED_TRAINING_ROUTE = "predefined_routine"
+    const val PREDEFINED_TRAINING_FULL_ROUTE = "$PREDEFINED_TRAINING_ROUTE/{faseIndex}/{semanaIndex}/{diaIndex}"
+
 }
 
 // Función composable que define el gráfico de navegación principal de la app
 @RequiresApi(35)
 @Composable
 fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel) {
+    val nutritionApiService = remember { NutritionApiService.create() }
+    val nutritionViewModelFactory = remember { NutritionViewModelFactory(nutritionApiService) }
+    val newsViewModel: NewsViewModel = viewModel()
+    val apiService = NutritionixRetrofitClient.api
+    val appId = "694ca093"  // x-app-id real
+    val apiKey = "cdf3a7dba1923d02decfe5e39bdf3f"  // x-app-key real
+
+    val supplementViewModel: SupplementViewModel = viewModel(
+        factory = SupplementViewModelFactory(apiService, appId, apiKey)
+    )
+
+    val nutritionViewModel: NutritionViewModel = viewModel(factory = nutritionViewModelFactory)
     NavHost(navController = navController, startDestination = AppDestinations.SPLASH_ROUTE) {
 
         // Splash inicial, decide a dónde navegar
@@ -134,18 +158,55 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
             CalendarioEntrenamientoScreen(
                 navController = navController,
                 diasConEntrenamiento = diasConEntrenamiento,
-                obtenerHistorialParaFecha = { fecha ->
-                    historial.filter { it.fecha.startsWith(fecha.toString()) }
-                        .map { it.rutinaNombre ?: "Sin nombre" }
-                },
                 cicloViewModel = cicloViewModel
             )
+
+        }
+        composable("reto_detalle/{retoId}") { backStackEntry ->
+            val retoId = backStackEntry.arguments?.getString("retoId")?.toIntOrNull() ?: return@composable
+            RetoDetalleScreen(retoId, navController = navController)
         }
 
         // Buscar amigos
         composable(AppDestinations.AMIGOS_ROUTE) {
-            BuscarUsuariosScreen(navController)
+            ExploreScreen(
+                navController = navController,
+                newsViewModel = newsViewModel,
+                nutritionViewModel = nutritionViewModel,
+                supplementViewModel = supplementViewModel
+            )
         }
+        composable(
+            route = AppDestinations.PREDEFINED_TRAINING_FULL_ROUTE,
+            arguments = listOf(
+                navArgument("faseIndex") { type = NavType.IntType },
+                navArgument("semanaIndex") { type = NavType.IntType },
+                navArgument("diaIndex") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+
+            val faseIndex = backStackEntry.arguments?.getInt("faseIndex") ?: 0
+            val semanaIndex = backStackEntry.arguments?.getInt("semanaIndex") ?: 0
+            val diaIndex = backStackEntry.arguments?.getInt("diaIndex") ?: 0
+
+            RutinaPredefinidaScreen(
+                rutinaId = RutinaTemporalHolder.rutinaId,
+                rutinaNombre = RutinaTemporalHolder.rutinaNombre,
+                ejercicios = RutinaTemporalHolder.ejercicios,
+                navController = navController,
+                rutinaViewModel = viewModel(),
+                faseIndex = faseIndex,
+                semanaIndex = semanaIndex,
+                diaIndex = diaIndex
+            )
+        }
+
+
+
+
+
+
+
 
         // Ejecución de rutina
         composable("${AppDestinations.TRAINING_ROUTE}/{rutinaId}",
@@ -164,6 +225,10 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
             }
 
             RutinaScreen(rutinaId, ejercicios, navController, rutinaNombre, cicloViewModel, rutinaViewModel)
+        }
+
+        composable("rutinaPredefinida") {
+            ContentTrainingScreen(rutinaId = 0, navController = navController)
         }
 
         // Lista de ejercicios disponibles para agregar

@@ -1,3 +1,5 @@
+// Archivo: RutinaDetailScreen.kt
+
 package com.example.version00.ui.screens.rutina
 
 import androidx.compose.foundation.background
@@ -6,20 +8,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.DismissDirection
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.DismissValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.PlayArrow
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,37 +33,33 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
 import com.example.version00.R
 import com.example.version00.ui.model.EjercicioGuardado
 import com.example.version00.ui.navigation.AppDestinations
 import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
 import kotlinx.coroutines.launch
-// ... (otros imports sin cambios)
-import androidx.compose.material.icons.filled.FitnessCenter // Icono alternativo para el título
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun RutinaDetailScreen(
-    rutinaId: Int, // <<--- CAMBIO: Int a String
-    rutinaNombre: String, // El nombre ya se pasa, podemos usarlo en el título
+    rutinaId: Int,
+    rutinaNombre: String,
     navController: NavHostController,
     firebaseViewModel: RutinaFirebaseViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val ejerciciosDeRutina = remember { mutableStateListOf<EjercicioGuardado>() }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    // val contexto = LocalContext.current // No se usa, se puede quitar si no es necesario para otra cosa
     var isLoading by remember { mutableStateOf(true) }
     var initialLoadDone by remember { mutableStateOf(false) }
 
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val refreshTrigger = remember { mutableStateOf(false) } // Para forzar la recarga
+    var mostrarDialogoRenombrar by remember { mutableStateOf(false) }
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+    var nombreEditado by remember { mutableStateOf(rutinaNombre) }
 
-    LaunchedEffect(rutinaId, refreshTrigger.value) {
+    LaunchedEffect(rutinaId) {
         isLoading = true
-        // Asegúrate que firebaseViewModel.obtenerEjerciciosDeRutina espera un String para rutinaId
         firebaseViewModel.obtenerEjerciciosDeRutina(rutinaId) { listaEjercicios ->
             ejerciciosDeRutina.clear()
             ejerciciosDeRutina.addAll(listaEjercicios)
@@ -72,34 +68,32 @@ fun RutinaDetailScreen(
         }
     }
 
-    // Refrescar si se vuelve de la pantalla de edición/creación de ejercicio
-    LaunchedEffect(currentBackStackEntry) {
-        val cameFromEdit = currentBackStackEntry?.savedStateHandle?.remove<Boolean>("ejercicio_actualizado_o_creado") == true
-        if (cameFromEdit) {
-            refreshTrigger.value = !refreshTrigger.value // Cambia el valor para activar el LaunchedEffect de arriba
-        }
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(rutinaNombre.ifBlank { "Detalle de Rutina" }) }, // Usar el nombre de la rutina
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(rutinaNombre.ifBlank { "Detalle de Rutina" })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(onClick = { mostrarDialogoRenombrar = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Renombrar rutina")
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 },
-                actions = { // Opcional: añadir un icono o texto que identifique la rutina
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
-                        Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(text="#${rutinaId}...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) // Mostrar parte del ID
+                actions = {
+                    IconButton(onClick = { mostrarDialogoEliminar = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar rutina")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp), // Un poco de elevación
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
@@ -109,10 +103,10 @@ fun RutinaDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Aplicar padding del Scaffold
+                .padding(paddingValues)
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                if (isLoading && !initialLoadDone) { // Mostrar progreso solo en la carga inicial
+                if (isLoading && !initialLoadDone) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
@@ -120,7 +114,7 @@ fun RutinaDetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 24.dp), // Más padding
+                            .padding(horizontal = 24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -134,66 +128,33 @@ fun RutinaDetailScreen(
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize() // Asegurar que LazyColumn llene el espacio
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         items(ejerciciosDeRutina, key = { it.id }) { ejercicio ->
                             val dismissState = rememberDismissState(
                                 confirmStateChange = {
                                     if (it == DismissValue.DismissedToEnd || it == DismissValue.DismissedToStart) {
-                                        // Acción de borrado aquí, antes de que el item desaparezca visualmente
-                                        // para evitar que se recomponga brevemente en su sitio original
-                                        firebaseViewModel.eliminarEjercicioDeRutina(rutinaId, ejercicio.id) // <<--- Pasar String
-                                        ejerciciosDeRutina.remove(ejercicio) // Actualizar UI inmediatamente
+                                        firebaseViewModel.eliminarEjercicioDeRutina(rutinaId, ejercicio.id)
+                                        ejerciciosDeRutina.remove(ejercicio)
                                         scope.launch {
                                             snackbarHostState.showSnackbar(
                                                 message = "${ejercicio.nombre} eliminado",
                                                 withDismissAction = true
                                             )
                                         }
-                                        true // Confirmar el cambio de estado
+                                        true
                                     } else false
                                 }
                             )
 
-                            // No es necesario el LaunchedEffect aquí si confirmStateChange ya maneja la lógica
-                            // if (dismissState.isDismissed(DismissDirection.EndToStart) ||
-                            //     dismissState.isDismissed(DismissDirection.StartToEnd)
-                            // ) {
-                            //     LaunchedEffect(ejercicio.id) { // Usar ejercicio.id para que se lance solo una vez por item
-                            //         val ejercicioAEliminar = ejerciciosDeRutina.find { it.id == ejercicio.id }
-                            //         if (ejercicioAEliminar != null) {
-                            //             firebaseViewModel.eliminarEjercicioDeRutina(rutinaId, ejercicioAEliminar.id) // <<--- Pasar String
-                            //             ejerciciosDeRutina.remove(ejercicioAEliminar) // Actualizar UI
-                            //             scope.launch {
-                            //                 snackbarHostState.showSnackbar(
-                            //                     message = "${ejercicioAEliminar.nombre} eliminado",
-                            //                     withDismissAction = true
-                            //                 )
-                            //             }
-                            //         }
-                            //     }
-                            // }
-
                             SwipeToDismiss(
                                 state = dismissState,
-                                directions = setOf(
-                                    DismissDirection.StartToEnd, // Habilitar ambos sentidos si se desea
-                                    DismissDirection.EndToStart
-                                ),
-                                dismissThresholds = { FractionalThreshold(0.4f) }, // Umbral más sensible
+                                directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
+                                dismissThresholds = { FractionalThreshold(0.4f) },
                                 background = {
                                     val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
-                                    val color = when (direction) {
-                                        DismissDirection.StartToEnd -> Color.Red.copy(alpha = 0.7f)
-                                        DismissDirection.EndToStart -> Color.Red.copy(alpha = 0.7f)
-                                        else -> Color.Transparent
-                                    }
-                                    val alignment = when (direction) {
-                                        DismissDirection.StartToEnd -> Alignment.CenterStart
-                                        DismissDirection.EndToStart -> Alignment.CenterEnd
-                                        else -> Alignment.Center
-                                    }
-                                    val icon = Icons.Default.Delete
+                                    val color = Color.Red.copy(alpha = 0.7f)
+                                    val alignment = if (direction == DismissDirection.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
 
                                     Box(
                                         modifier = Modifier
@@ -202,17 +163,13 @@ fun RutinaDetailScreen(
                                             .padding(horizontal = 20.dp),
                                         contentAlignment = alignment
                                     ) {
-                                        Icon(icon, contentDescription = "Eliminar", tint = Color.White)
+                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.White)
                                     }
                                 },
                                 dismissContent = {
-                                    EjercicioRutinaItem(
-                                        ejercicio = ejercicio,
-                                        onClick = {
-                                            // Pasar rutinaId como String
-                                            navController.navigate("${AppDestinations.EDIT_EJERCICIO_RUTINA_ROUTE}/$rutinaId/${ejercicio.id}")
-                                        }
-                                    )
+                                    EjercicioRutinaItem(ejercicio = ejercicio) {
+                                        navController.navigate("${AppDestinations.EDIT_EJERCICIO_RUTINA_ROUTE}/$rutinaId/${ejercicio.id}")
+                                    }
                                 }
                             )
                         }
@@ -220,26 +177,24 @@ fun RutinaDetailScreen(
                 }
             }
 
-            // Botones fijos en la parte inferior
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)) // Fondo para separar visualmente
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
                     .padding(16.dp)
             ) {
                 Button(
                     onClick = {
-                        // Pasar rutinaId como String
                         navController.navigate("${AppDestinations.LISTA_EJERCICIOS_ROUTE}/$rutinaId")
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp), // Bordes redondeados
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null) // Content description no es necesario para iconos decorativos si el texto lo explica
+                    Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Añadir ejercicio")
                 }
@@ -249,7 +204,6 @@ fun RutinaDetailScreen(
                 Button(
                     onClick = {
                         if (ejerciciosDeRutina.isNotEmpty()) {
-                            // Pasar rutinaId como String
                             navController.navigate("${AppDestinations.TRAINING_ROUTE}/$rutinaId")
                         } else {
                             scope.launch {
@@ -259,7 +213,7 @@ fun RutinaDetailScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = ejerciciosDeRutina.isNotEmpty(), // Deshabilitar si no hay ejercicios
+                    enabled = ejerciciosDeRutina.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondary,
                         contentColor = MaterialTheme.colorScheme.onSecondary
@@ -272,10 +226,60 @@ fun RutinaDetailScreen(
             }
         }
     }
-}
 
-// ... (EjercicioRutinaItem sin cambios, asumiendo que está bien)
-// El composable EjercicioRutinaItem ya está bien diseñado.
+    if (mostrarDialogoRenombrar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoRenombrar = false },
+            title = { Text("Cambiar nombre de rutina") },
+            text = {
+                OutlinedTextField(
+                    value = nombreEditado,
+                    onValueChange = { nombreEditado = it },
+                    label = { Text("Nuevo nombre") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    firebaseViewModel.editarNombreRutina(rutinaId, nombreEditado) {
+                        if (it) navController.navigateUp()
+                    }
+                    mostrarDialogoRenombrar = false
+                }) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoRenombrar = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    if (mostrarDialogoEliminar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoEliminar = false },
+            title = { Text("¿Eliminar rutina?") },
+            text = { Text("¿Estás segura/o de que quieres eliminar esta rutina? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    firebaseViewModel.eliminarRutina(rutinaId) { exito, _ ->
+                        if (exito) navController.popBackStack()
+                    }
+                    mostrarDialogoEliminar = false
+                }) {
+                    Text("Sí, eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
 
 @Composable
 fun EjercicioRutinaItem(
@@ -286,7 +290,7 @@ fun EjercicioRutinaItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }, // ✅ CLICK!
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -332,4 +336,3 @@ fun EjercicioRutinaItem(
         }
     }
 }
-

@@ -35,7 +35,9 @@ fun RecuadroMorado(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(170.dp)
-            .clickable { onClick() }
+            .clickable { onClick(
+
+            ) }
     ) {
         Box(
             modifier = Modifier

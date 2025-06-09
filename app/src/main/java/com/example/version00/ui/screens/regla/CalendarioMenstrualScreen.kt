@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -23,10 +26,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.version00.ui.viewmodel.CalendarioMenstrualViewModel
+import com.example.version00.ui.viewmodel.HistorialViewModel
 import com.example.version00.ui.viewmodel.PeriodoConfirmado
 import com.example.version00.ui.viewmodel.Predicciones
+import com.example.version00.ui.viewmodel.RutinaFirebaseViewModel
+import com.example.version00.ui.viewmodel.RutinaResumen
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -39,88 +46,115 @@ val colorPeriodoProbableBorde = Color(0xFFE57373)
 val colorFertil = Color(0xFF388E3C)
 val colorOvulacion = Color(0xFF0288D1)
 val colorHoyBorde = Color(0xFF7B1FA2)
-val colorFondoDiaHoy = Color(0xFFF3E5F5)
 
 @Composable
 fun CalendarioEntrenamientoScreen(
     navController: NavHostController,
     diasConEntrenamiento: List<LocalDate>,
-    obtenerHistorialParaFecha: (LocalDate) -> List<String>,
-    cicloViewModel: CalendarioMenstrualViewModel
+    cicloViewModel: CalendarioMenstrualViewModel,
+    rutinaViewModel: HistorialViewModel = viewModel()
 ) {
     var mesActual by remember { mutableStateOf(YearMonth.now()) }
     var diaSeleccionado by remember { mutableStateOf<LocalDate?>(null) }
+    var rutinasDelDia by remember { mutableStateOf<List<RutinaResumen>>(emptyList()) }
     val periodosConfirmados by cicloViewModel.periodosConfirmados
     val predicciones by cicloViewModel.predicciones
     val periodoActivoSinFin = cicloViewModel.periodoActivoSinFin
+    val colorFondoDiaHoy = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .background(MaterialTheme.colorScheme.background)
             .padding(8.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                CalendarioHeader(
-                    mesActual = mesActual,
-                    onMesAnterior = { mesActual = mesActual.minusMonths(1) },
-                    onMesSiguiente = { mesActual = mesActual.plusMonths(1) }
-                )
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            CalendarioHeader(
+                mesActual = mesActual,
+                onMesAnterior = { mesActual = mesActual.minusMonths(1) },
+                onMesSiguiente = { mesActual = mesActual.plusMonths(1) }
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                CalendarioGridActividades(
-                    mesActual = mesActual,
-                    diasConEntrenamiento = diasConEntrenamiento,
-                    periodosConfirmados = periodosConfirmados,
-                    predicciones = predicciones,
-                    onDiaClick = { diaSeleccionado = it }
-                )
+            CalendarioGridActividades(
+                mesActual = mesActual,
+                diasConEntrenamiento = diasConEntrenamiento,
+                periodosConfirmados = periodosConfirmados,
+                predicciones = predicciones,
+                onDiaClick = { diaSeleccionado = it },
+                colorFondoDiaHoy = colorFondoDiaHoy
+            )
 
-                Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            CalendarioLeyenda(colorFondoDiaHoy = colorFondoDiaHoy)
+            Spacer(modifier = Modifier.height(16.dp))
 
-                CalendarioLeyenda()
+            Text(
+                text = "Toca un día para ver tus rutinas o registrar tu ciclo.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            if (rutinasDelDia.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Rutinas del día:", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Toca un día para ver tus rutinas o registrar tu ciclo.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                rutinasDelDia.forEach { rutina ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(rutina.nombre, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            rutina.ejercicios.forEach { ejercicio ->
+                                Text("• ${ejercicio.nombre}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    "   Reps: ${ejercicio.reps.joinToString()} | Pesos: ${ejercicio.pesos.joinToString()}",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     diaSeleccionado?.let { fecha ->
-        val eventos = obtenerHistorialParaFecha(fecha)
         val esInicioPeriodo = periodosConfirmados.any { it.inicio == fecha }
         val puedeMarcarFin = periodoActivoSinFin != null && !fecha.isBefore(periodoActivoSinFin.inicio)
 
         AlertDialog(
             onDismissRequest = { diaSeleccionado = null },
             confirmButton = {
-                TextButton(onClick = { diaSeleccionado = null }) { Text("Cerrar") }
+                TextButton(onClick = {
+                    diaSeleccionado = null
+                    rutinaViewModel.obtenerRutinasPorFecha(fecha) {
+                        rutinasDelDia = it
+                    }
+                }) {
+                    Text("Cerrar")
+                }
             },
             title = {
                 Text("Acciones para ${fecha.dayOfMonth}/${fecha.monthValue}/${fecha.year}")
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (eventos.isNotEmpty()) {
-                        Text("Entrenamientos registrados:")
-                        eventos.forEach { evento -> Text("• $evento") }
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-
                     if (periodoActivoSinFin == null && !esInicioPeriodo) {
                         Button(onClick = {
                             cicloViewModel.marcarInicioPeriodo(fecha)
                             diaSeleccionado = null
+                            rutinaViewModel.obtenerRutinasPorFecha(fecha) { rutinasDelDia = it }
                         }) {
                             Text("Marcar Inicio de Periodo")
                         }
@@ -130,6 +164,7 @@ fun CalendarioEntrenamientoScreen(
                         Button(onClick = {
                             cicloViewModel.marcarFinPeriodo(fecha)
                             diaSeleccionado = null
+                            rutinaViewModel.obtenerRutinasPorFecha(fecha) { rutinasDelDia = it }
                         }) {
                             Text("Marcar Fin de Periodo")
                         }
@@ -140,6 +175,7 @@ fun CalendarioEntrenamientoScreen(
                             onClick = {
                                 cicloViewModel.desmarcarPeriodo(fecha)
                                 diaSeleccionado = null
+                                rutinaViewModel.obtenerRutinasPorFecha(fecha) { rutinasDelDia = it }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                         ) {
@@ -152,13 +188,16 @@ fun CalendarioEntrenamientoScreen(
     }
 }
 
+
+
 @Composable
 fun CalendarioGridActividades(
     mesActual: YearMonth,
     diasConEntrenamiento: List<LocalDate>,
     periodosConfirmados: List<PeriodoConfirmado>,
     predicciones: Predicciones,
-    onDiaClick: (LocalDate) -> Unit
+    onDiaClick: (LocalDate) -> Unit,
+    colorFondoDiaHoy: Color
 ) {
     val hoy = LocalDate.now()
     val primerDiaDelMes = mesActual.atDay(1)
@@ -215,7 +254,7 @@ fun CalendarioGridActividades(
                 esHoy -> {
                     modifierDia = modifierDia
                         .border(2.dp, colorHoyBorde, CircleShape)
-                        .background(colorFondoDiaHoy.copy(alpha = 0.3f))
+                        .background(colorFondoDiaHoy)
                     textColor = MaterialTheme.colorScheme.primary
                 }
             }
@@ -279,7 +318,7 @@ fun CalendarioHeader(
 }
 
 @Composable
-fun CalendarioLeyenda() {
+fun CalendarioLeyenda(colorFondoDiaHoy: Color) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
@@ -295,7 +334,7 @@ fun CalendarioLeyenda() {
         LeyendaItem(color = colorFertil, label = "Días Fértiles")
         LeyendaItem(color = colorOvulacion, label = "Día de Ovulación")
         LeyendaItem(borderColor = colorPeriodoProbableBorde, label = "Periodo Probable (Borde)", isBordered = true)
-        LeyendaItem(borderColor = colorHoyBorde, label = "Día Actual (Borde)", isBordered = true, hasSlightBackground = true)
+        LeyendaItem(borderColor = colorHoyBorde, label = "Día Actual (Borde)", isBordered = true, hasSlightBackground = true, fondoHoy = colorFondoDiaHoy)
     }
 }
 
@@ -305,7 +344,8 @@ fun LeyendaItem(
     color: Color? = null,
     borderColor: Color? = null,
     isBordered: Boolean = false,
-    hasSlightBackground: Boolean = false
+    hasSlightBackground: Boolean = false,
+    fondoHoy: Color = Color.Transparent
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -318,7 +358,7 @@ fun LeyendaItem(
         if (isBordered && borderColor != null) {
             boxModifier = boxModifier.border(1.5.dp, borderColor, CircleShape)
             if (hasSlightBackground) {
-                boxModifier = boxModifier.background(colorFondoDiaHoy.copy(alpha = 0.5f))
+                boxModifier = boxModifier.background(fondoHoy)
             }
         } else if (color != null) {
             boxModifier = boxModifier.background(color)

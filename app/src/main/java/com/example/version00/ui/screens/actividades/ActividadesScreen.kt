@@ -35,35 +35,9 @@ fun ActividadesScreen(navController: NavHostController) {
 
     // Composición de la UI
     Column {
-        // Fila de pestañas
-        TabRow(
-            selectedTabIndex = selectedTabIndex, // Indica cuál pestaña está seleccionada
-            backgroundColor = Color.Black, // Color del fondo de la barra
-            contentColor = Color(0xFFFF9800) // Color para la pestaña activa
-        ) {
-            // Crea una pestaña por cada título
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index, // Si está seleccionada
-                    onClick = {
-                        selectedTabIndex = index // Cambia la pestaña activa
-                        // Guarda la selección en SharedPreferences para recordar al volver
-                        sharedPreferences.edit().putInt(PREF_LAST_TAB_INDEX, index).apply()
-                    },
-                    text = {
-                        Text(
-                            title,
-                            color = if (selectedTabIndex == index) Color.White else Color.Gray // Color del texto según si está activa o no
-                        )
-                    }
-                )
-            }
-        }
 
-        // Contenido según la pestaña seleccionada
-        when (selectedTabIndex) {
-            0 -> FatigaMuscularView() // Pestaña 0: muestra vista de fatiga muscular
-            1 -> HistoricoView() // Pestaña 1: muestra el historial de rutinas
-        }
+
+        FatigaMuscularView() // Pestaña 0: muestra vista de fatiga muscular
+
     }
 }

@@ -90,12 +90,15 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     //noinspection UseTomlInstead
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 
     // 🔧 Red limpia y única para Retrofit + Gson
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.google.code.gson:gson:2.11.0")
-
+    implementation("com.patrykandpatrick.vico:core:2.1.2")
+    implementation("com.patrykandpatrick.vico:compose:2.1.2")
+    implementation("com.patrykandpatrick.vico:compose-m3:2.1.2")
     // ✅ Coil solo una vez
     implementation("io.coil-kt:coil-compose:2.4.0")
 
@@ -119,6 +122,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.volley)
     implementation("com.google.firebase:firebase-messaging:23.1.2")
+    implementation(libs.androidx.core.i18n)
 
     // Tests
     testImplementation(libs.junit)

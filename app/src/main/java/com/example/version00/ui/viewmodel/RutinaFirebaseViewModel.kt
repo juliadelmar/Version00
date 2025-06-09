@@ -162,6 +162,45 @@ class RutinaFirebaseViewModel : ViewModel() {
             onResult(fatiga)
         }
     }
+    fun obtenerEjerciciosDeRutinaPredefinida(
+        rutinaNombre: String,
+        onResult: (List<EjercicioGuardado>) -> Unit
+    ) {
+        try {
+            val (faseStr, semanaStr, diaStr) = rutinaNombre.split("_")
+
+            val semanaIndex = semanaStr.removePrefix("Semana").toInt() - 1
+            val diaIndex = diaStr.removePrefix("Dia").toInt() - 1
+
+            val semanas = com.example.version00.data.ResistenciaBuilder.build()
+            val ejercicios = semanas.getOrNull(semanaIndex)?.dias?.getOrNull(diaIndex)?.ejercicios
+
+            if (ejercicios != null) {
+                val ejerciciosGuardados = ejercicios.map { ejercicio ->
+                    EjercicioGuardado(
+                        id = ejercicio.id,
+                        nombre = ejercicio.nombre,
+                        urlGif = ejercicio.url ?: "",
+                        series = ejercicio.series,
+                        reps = MutableList(ejercicio.series) { ejercicio.repeticiones.toString() },
+                        repsRecamara = MutableList(ejercicio.series)  { ejercicio.rir.toString() },
+                        pesos = MutableList(ejercicio.series) { "0" }, // pesos por defecto
+                        porcentajeDeActivacion = ejercicio.activacion ?: emptyMap(),
+                        notas = ""
+                    )
+                }
+                onResult(ejerciciosGuardados)
+            } else {
+                onResult(emptyList())
+            }
+        } catch (e: Exception) {
+            Log.e("Firebase", "❌ Error al obtener rutina predefinida: ${e.message}")
+            onResult(emptyList())
+        }
+    }
+
+
+
     @SuppressLint("SuspiciousIndentation")
     fun obtenerEstadisticasDeRutinas(
         dias: Int = 7,
@@ -171,40 +210,52 @@ class RutinaFirebaseViewModel : ViewModel() {
 
         val ref = FirebaseDatabase.getInstance().reference
             .child("usuarios").child(uid).child("rutinasHistorial")
-            ref.get().addOnSuccessListener { snapshot ->
-                val ahora = LocalDate.now()
-                val fechaLimite = ahora.minusDays(dias.toLong())
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-                val resultado = EstadisticasEntrenamiento()
+        ref.get().addOnSuccessListener { snapshot ->
+            val ahora = LocalDate.now()
+            val fechaLimite = ahora.minusDays(dias.toLong())
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-                snapshot.children.forEach { rutinaSnap ->
-                    val fecha = rutinaSnap.child("fecha").getValue(String::class.java)?.let {
-                        try { LocalDate.parse(it, formatter) } catch (_: Exception) { null }
-                    } ?: return@forEach
+            val resultado = EstadisticasEntrenamiento()
 
-                    if (fecha.isBefore(fechaLimite)) return@forEach
+            snapshot.children.forEach { rutinaSnap ->
+                val fechaStr = rutinaSnap.child("fecha").getValue(String::class.java)
+                val fecha = fechaStr?.let {
+                    try { LocalDate.parse(it.substring(0, 10), formatter) } catch (_: Exception) { null }
+                } ?: return@forEach
 
-                    rutinaSnap.child("ejercicios").children.forEach { ej ->
-                        resultado.ejercicios++
-                        val series = ej.child("series").getValue(Int::class.java) ?: 0
-                        resultado.series += series
-                        val reps = ej.child("reps").children.mapNotNull { it.getValue(String::class.java)?.toIntOrNull() }
-                        val pesos = ej.child("pesos").children.mapNotNull {
-                            it.getValue(String::class.java)?.replace(",", ".")?.toFloatOrNull()
-                        }
+                Log.d("Estadisticas", "📅 Fecha rutina: $fecha")
 
-                        resultado.reps += reps.sum()
-                        resultado.carga += reps.zip(pesos).fold(0f) { acc, (r, p) -> acc + r * p }
+                if (fecha.isBefore(fechaLimite)) return@forEach
 
+                rutinaSnap.child("ejercicios").children.forEach { ej ->
+                    resultado.ejercicios++
+                    val series = ej.child("series").getValue(Int::class.java) ?: 0
+                    resultado.series += series
 
+                    val reps = ej.child("reps").children.mapNotNull {
+                        it.getValue(String::class.java)?.toIntOrNull()
                     }
-                }
+                    val pesos = ej.child("pesos").children.mapNotNull {
+                        it.getValue(String::class.java)?.replace(",", ".")?.toFloatOrNull()
+                    }
 
-                resultado.calorias = (resultado.carga * 0.05f).toInt()
-                onResult(resultado)
+                    Log.d("Estadisticas", "📌 Reps: $reps, Pesos: $pesos")
+
+                    resultado.reps += reps.sum()
+                    resultado.carga += reps.zip(pesos).fold(0f) { acc, (r, p) ->
+                        if (p.isFinite()) acc + r * p else acc
+                    }
+
+                }
             }
+
+            resultado.calorias = (resultado.carga * 0.05f).toInt()
+            Log.d("Estadisticas", "✅ Resultado final: $resultado")
+            onResult(resultado)
+        }
     }
+
     fun guardarUltimoPesoEjecutado(
         ejercicioId: String,
         peso: Float,
@@ -266,6 +317,8 @@ class RutinaFirebaseViewModel : ViewModel() {
         rutinaId: Int,
         rutinaNombre: String,
         ejercicios: List<EjercicioGuardado>,
+        caloriasEstimadas: Double,
+        cargaTotal: Double,
         onResult: (Boolean, String) -> Unit
     ) {
         val uid = getUserUid()
@@ -281,7 +334,7 @@ class RutinaFirebaseViewModel : ViewModel() {
                 "series" to (ejercicio.pesos?.size ?: 0),
                 "pesos" to (ejercicio.pesos ?: emptyList<String>()),
                 "reps" to (ejercicio.reps ?: emptyList<String>()),
-                "rir" to (ejercicio.repsRecamara ?: emptyList<String>())
+                "rir" to (ejercicio.repsRecamara ?: emptyList<String>()),
             )
         }
 
@@ -289,6 +342,8 @@ class RutinaFirebaseViewModel : ViewModel() {
             "fecha" to fecha,
             "rutinaId" to rutinaId,
             "rutinaNombre" to rutinaNombre,
+            "cargaTotalKg" to "%.1f".format(cargaTotal),
+            "caloriasEstimadas" to "%.1f".format(caloriasEstimadas),
             "ejercicios" to ejerciciosMap
         )
 
@@ -308,6 +363,7 @@ class RutinaFirebaseViewModel : ViewModel() {
                 onResult(false, "❌ Error al guardar historial")
             }
     }
+
     fun obtenerRutinaHistorial(
         rutinaId: Int,
         onResult: (Map<String, Map<String, List<String>>>) -> Unit
@@ -331,6 +387,18 @@ class RutinaFirebaseViewModel : ViewModel() {
                     val resultado = mutableMapOf<String, Map<String, List<String>>>()
 
                     for (rutinaSnapshot in snapshot.children) {
+                        // Recuperar resumen general
+                        val fecha = rutinaSnapshot.child("fecha").getValue(String::class.java) ?: "Sin fecha"
+                        val carga = rutinaSnapshot.child("cargaTotalKg").getValue(String::class.java) ?: "0.0"
+                        val calorias = rutinaSnapshot.child("caloriasEstimadas").getValue(String::class.java) ?: "0.0"
+
+                        resultado["__resumen"] = mapOf(
+                            "fecha" to listOf(fecha),
+                            "cargaTotalKg" to listOf(carga),
+                            "caloriasEstimadas" to listOf(calorias)
+                        )
+
+                        // Recuperar ejercicios
                         val ejerciciosSnapshot = rutinaSnapshot.child("ejercicios")
                         for (ejercicioSnap in ejerciciosSnapshot.children) {
                             val nombre = ejercicioSnap.child("nombre").getValue(String::class.java) ?: "SinNombre"
@@ -356,6 +424,7 @@ class RutinaFirebaseViewModel : ViewModel() {
                 }
             })
     }
+
     fun obtenerRutinas(onResult: (List<Rutina>) -> Unit) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return onResult(emptyList())
 
@@ -381,6 +450,32 @@ class RutinaFirebaseViewModel : ViewModel() {
                 }
             })
     }
+
+    fun eliminarRutina(
+        rutinaId: Int,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        val uid = getUserUid()
+        if (uid == null) {
+            onResult(false, "Usuario no autenticado")
+            return
+        }
+
+        val rutinaRef = dbRef
+            .child("usuarios").child(uid)
+            .child("rutinas").child("rutina_$rutinaId")
+
+        rutinaRef.removeValue()
+            .addOnSuccessListener {
+                Log.d("Firebase", "✅ Rutina $rutinaId eliminada correctamente")
+                onResult(true, "✅ Rutina eliminada")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "❌ Error al eliminar rutina: ${e.message}")
+                onResult(false, "❌ Error al eliminar rutina")
+            }
+    }
+
 
 
     fun crearNuevaRutina(nombre: String, onResult: (Int?) -> Unit) {

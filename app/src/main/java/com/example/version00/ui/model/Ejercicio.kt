@@ -24,7 +24,7 @@ data class Ejercicio(
     val equipo: String,
     val tipoDeEjercicio: String,
     val musculosTrabajados: MusculosTrabajados,
-    val porcentajeDeActivacion: Map<String, Map<String, Int>>,
+    val porcentajeDeActivacion: Map<String, Map<String, Int>> = emptyMap(),
     val instrucciones: List<String>,
     val erroresComunes: List<String>
 )

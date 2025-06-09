@@ -71,8 +71,9 @@ fun ContentBoxHome(
         Spacer(modifier = Modifier.height(30.dp))
 
         // Recuadro con botón de comenzar entrenamiento
-        RecuadroMorado(onClick = onNavigateToTraining)
-
+        RecuadroMorado(onClick = {
+            navController.navigate("rutinaPredefinida")
+        })
         Spacer(modifier = Modifier.height(20.dp))
 
         // Título de la sección de rutinas
@@ -120,12 +121,17 @@ fun ContentBoxHome(
                         OutlinedTextField(
                             value = nuevaRutinaNombre,
                             onValueChange = { nuevaRutinaNombre = it },
-                            label = { Text("Nombre") },
+                            label = { Text("Nombre", color = Color.White) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = Color.White,
+                                cursorColor = Color.White,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
                             )
                         )
 
@@ -146,7 +152,7 @@ fun ContentBoxHome(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Crear")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Crear")
+                            Text("Crear", color = Color.White)
                         }
                     }
                 }

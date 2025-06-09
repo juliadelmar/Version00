@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 
 // Tu color personalizado
 val PurpleCustom = Color(0xFFB58EDC)
-val purleDark = Color(0xFF2B1F30)
+val purleDark = Color(0xFFB58EDC)
 // Esquema de colores para tema oscuro
 private val DarkColorScheme = darkColorScheme(
     primary = purleDark,

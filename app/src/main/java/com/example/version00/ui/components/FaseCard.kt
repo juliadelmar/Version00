@@ -2,7 +2,9 @@ package com.example.version00.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,25 +25,39 @@ import com.example.version00.R
  * @param semanas Texto con duración (ej. "Semana 1-4").
  */
 @Composable
-fun FaseCard(titulo: String, semanas: String) {
+fun FaseCard(
+    titulo: String,
+    semanas: String,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean
+) {
+    val backgroundColor = if (isSelected) Color(0xFF7B1FA2) else Color(0xFF2B1F30)
+    val borderModifier = if (isSelected) {
+        Modifier.border(
+            width = 2.dp,
+            color = Color(0xFFE1BEE7),
+            shape = RoundedCornerShape(12.dp)
+        )
+    } else Modifier
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(80.dp) // Altura reducida
-            .background(Color(0xFF2B1F30)) // Fondo oscuro
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .height(80.dp)
+            .then(borderModifier)
+            .background(backgroundColor, shape = RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Columna con texto
             Column {
                 Text(
                     text = titulo,
                     color = Color.White,
-                    fontSize = 16.sp
+                    fontSize = 18.sp
                 )
                 Text(
                     text = semanas,
@@ -50,7 +66,6 @@ fun FaseCard(titulo: String, semanas: String) {
                 )
             }
 
-            // Imagen decorativa girada (mancuerna)
             Image(
                 painter = painterResource(id = R.drawable.mancuerna_horixontal),
                 contentDescription = "Mancuerna",
@@ -60,8 +75,6 @@ fun FaseCard(titulo: String, semanas: String) {
                     .graphicsLayer(rotationZ = 90f)
                     .offset(x = (-6).dp, y = (-10).dp)
             )
-
-            Spacer(modifier = Modifier.width(15.dp))
         }
     }
 }

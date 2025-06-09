@@ -168,7 +168,7 @@ fun ListaEjerciciosScreen(
                         // Elementos de la lista de ejercicios
                         items(ejerciciosPaginados, key = { it._id }) { ejercicio ->
                             ItemEjercicio(ejercicio) {
-                                navController.navigate("detalleEjercicio/${rutinaIdContext}/${ejercicio._id}")
+                                navController.navigate("detalleEjercicio/${rutinaIdContext}/${ejercicio._id.toInt()}")
                             }
                         }
 

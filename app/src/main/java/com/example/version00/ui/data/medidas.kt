@@ -50,10 +50,13 @@ data class DatosAvanzados(
     val pliegueSubescapularMm: String = "",    // Pliegue subescapular en mm
     val pliegueSuprailiacoMm: String = "",     // Pliegue suprailiaco en mm
     val diametroMunecaCm: String = "",         // Diámetro de muñeca
-    val diametroFemurCm: String = ""           // Diámetro del fémur
+    val diametroFemurCm: String = "" ,
+    val edad: String
+// Diámetro del fémur
 ) {
+
     // Constructor requerido por Firebase
-    constructor() : this("", "", "", "", "", "", "", "", "", "", "", "", "")
+    constructor() : this("", "", "", "", "", "", "", "", "", "", "", "", "","")
 }
 
 /**

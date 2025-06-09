@@ -81,7 +81,7 @@ fun SvgMuscleHighlighter(
                 val scaledSvgHeight = svgViewBoxHeight * finalScale
                 val offsetX = (canvasWidth - scaledSvgWidth) / 2f
                 val offsetY = (canvasHeight - scaledSvgHeight) / 2f
-                val extraShiftRight = 62f
+                val extraShiftRight = 25f
                 val extraShiftDown = 18f
 
                 // Dibujo SVG escalado y alineado
@@ -109,3 +109,89 @@ fun SvgMuscleHighlighter(
         }
     }
 }
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+fun SvgMuscleHighlighter2(
+    modifier: Modifier = Modifier,
+    backgroundImageRes: Int,
+    svgImageRes: Int,
+    activacionPorId: Map<String, Int>,
+    svgViewBoxWidth: Float,
+    svgViewBoxHeight: Float,
+) {
+    val context = LocalContext.current
+
+    // Parseamos el SVG y recordamos los paths
+    val svgParts = remember(svgImageRes, context) {
+        if (svgImageRes != 0) {
+            val parts = parseVectorDrawableFile(context, svgImageRes)
+            parts.forEach { Log.d("SVG_DEBUG", "ID disponible: ${it.id}") }
+            parts
+        } else emptyList()
+    }
+
+    // Contenedor que ajusta escala y alineación
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+
+        // Imagen de fondo: silueta humana
+        Image(
+            painter = painterResource(id = backgroundImageRes),
+            contentDescription = "Fondo",
+            modifier = Modifier
+                .fillMaxSize(0.85f)
+                .align(Alignment.TopCenter),
+            contentScale = ContentScale.Fit
+        )
+
+        if (svgParts.isNotEmpty()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+
+                if (svgViewBoxWidth <= 0f || svgViewBoxHeight <= 0f) {
+                    Log.e("SvgHighlighter", "svgViewBoxWidth or svgViewBoxHeight is invalid.")
+                    return@Canvas
+                }
+
+                val scaleX = canvasWidth / svgViewBoxWidth
+                val scaleY = canvasHeight / svgViewBoxHeight
+
+                val scaleFactor = 0.85f  // Ajusta este valor para hacerlo más pequeño (0.5 es 50%, 1.0 es tamaño original)
+                val finalScale = minOf(scaleX, scaleY) * scaleFactor
+
+                val scaledSvgWidth = svgViewBoxWidth * finalScale
+                val scaledSvgHeight = svgViewBoxHeight * finalScale
+                val offsetX = (canvasWidth - scaledSvgWidth) / 2f
+                val offsetY = (canvasHeight - scaledSvgHeight) / 2f
+
+                val extraShiftRight = -80f
+                val extraShiftDown = -85f
+
+                // Dibujo SVG escalado y alineado
+                translate(left = offsetX + extraShiftRight, top = offsetY + extraShiftDown) {
+                    scale(scale = finalScale) {
+                        svgParts.forEach { part ->
+                            val activacion = activacionPorId[part.id] ?: 0
+                            val color = when {
+                                activacion >= 50 -> Color.Red.copy(alpha = 0.7f)        // Activación alta
+                                activacion >= 33 -> Color.Green.copy(alpha = 0.7f)      // Activación media
+                                activacion > 0   -> Color.LightGray.copy(alpha = 0.7f)  // Activación baja
+                                else             -> Color.Gray.copy(alpha = 0.3f)       // No activo
+                            }
+                            drawPath(
+                                path = part.composePath,
+                                color = color,
+                                style = Fill
+                            )
+                        }
+                    }
+                }
+            }
+
+        } else if (svgImageRes != 0) {
+            Log.w("SvgHighlighter", "No se encontraron partes SVG para $svgImageRes.")
+        }
+    }
+}
+
