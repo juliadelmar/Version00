@@ -146,7 +146,7 @@ fun ConfigurationScreen(
 
         Text("Tema de la aplicación", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
 
-        // 🌞🌚 Switch de tema
+        // Switch de tema
         Row(
             Modifier
                 .fillMaxWidth()
@@ -172,12 +172,12 @@ fun ConfigurationScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 🔓 Botón cerrar sesión
+        //  Botón cerrar sesión
         ButtomSalir(navController)
     }
 }
 
-// 🔐 Función para guardar imagen localmente
+//  Función para guardar imagen localmente
 fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri)

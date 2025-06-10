@@ -88,11 +88,9 @@ class CalendarioMenstrualViewModel(context: Context) : ViewModel() {
         // Recalcula todos los valores relacionados con el ciclo menstrual
         recalcularTodo()
     }
-
     // Última predicción reemplazada (almacena la última predicción que fue reemplazada)
     private val _ultimaPrediccionReemplazada = mutableStateOf<Predicciones?>(null)
     val ultimaPrediccionReemplazada: State<Predicciones?> = _ultimaPrediccionReemplazada
-
     // Promedios calculados y mostrables (valores promedio del ciclo menstrual y sangrado)
     private val _cicloPromedioCalculado = mutableStateOf<Int?>(null)
     private val _sangradoPromedioCalculado = mutableStateOf<Int?>(null)
@@ -133,7 +131,6 @@ class CalendarioMenstrualViewModel(context: Context) : ViewModel() {
         recalcularTodo()
     }
 
-    // Función para marcar el inicio de un período menstrual
     fun marcarInicioPeriodo(fecha: LocalDate) {
         // Verifica si ya hay un período activo sin fin y si la fecha de inicio es diferente
         if (periodoActivoSinFin != null && periodoActivoSinFin?.inicio != fecha) return
@@ -150,8 +147,6 @@ class CalendarioMenstrualViewModel(context: Context) : ViewModel() {
         // Guarda los datos actualizados
         guardarDatos()
     }
-
-    // Función para marcar el fin de un período menstrual
     fun marcarFinPeriodo(fecha: LocalDate) {
         // Obtiene el período activo sin fin
         val periodoActivo = periodoActivoSinFin
@@ -333,7 +328,6 @@ class CalendarioMenstrualViewModel(context: Context) : ViewModel() {
         return anteriores.filter { it <= confirmadoHasta }.toSet()
     }
 
-    // Función para recalcular la información del ciclo menstrual actual
     private fun recalcularInfoCicloActual() {
         // Obtiene la fecha actual
         val hoy = LocalDate.now()
@@ -427,7 +421,7 @@ class CalendarioMenstrualViewModel(context: Context) : ViewModel() {
                 .apply()
         } catch (e: Exception) {
             // Loguea el error si hay un error al guardar los datos
-            Log.e("CalendarioVM", "Error guardando JSON", e)
+            Log.e("CalendarioMrn", "Error guardando JSON", e)
         }
     }
 

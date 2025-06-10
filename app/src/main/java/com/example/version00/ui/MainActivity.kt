@@ -13,7 +13,7 @@ import androidx.compose.runtime.*
 import androidx.core.app.ActivityCompat
 import androidx.navigation.compose.rememberNavController
 import com.example.version00.ui.navigation.AuthNavGraph
-import com.example.version00.ui.theme.Version00Theme
+import com.example.version00.ui.theme.SyntraTheme
 import com.example.version00.ui.viewmodel.AuthViewModel
 
 class MainActivity : ComponentActivity() {
@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val sharedPref = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        val savedTheme = sharedPref.getString("app_theme", "light") ?: "light" // por defecto claro
+        val savedTheme = sharedPref.getString("app_theme", "light") ?: "light"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                 this,
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val darkTheme = savedTheme == "dark"
 
-            Version00Theme(darkTheme = darkTheme) {
+            SyntraTheme(darkTheme = darkTheme) {
                 val navController = rememberNavController()
                 AuthNavGraph(navController = navController, authViewModel = authViewModel)
             }

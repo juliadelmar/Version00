@@ -190,7 +190,7 @@ fun RutinaPredefinidaScreen(
                     navController = navController,
                     onDismiss = { mostrarResumen = false },
 
-                )
+                    )
             }
         }
     }

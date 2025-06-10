@@ -19,9 +19,9 @@ import com.example.version00.ui.viewmodel.AuthViewModel
 // Composable principal para la pantalla de Login
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel,         // ViewModel de autenticación
+    viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,       // Acción al iniciar sesión con éxito
-    navController: NavHostController  // Controlador de navegación para ir a otras pantallas
+    navController: NavHostController
 ) {
     // Estados locales para capturar el input del usuario
     var email by remember { mutableStateOf("") }

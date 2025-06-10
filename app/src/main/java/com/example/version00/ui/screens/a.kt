@@ -47,7 +47,7 @@ object RutinasPredefinidasProvider {
         fases = listOf(
             FaseEntrenamiento("1: Resistencia", ResistenciaBuilder.build()),
 
-        )
+            )
     )
 
     fun guardarEnSharedPreferences(context: Context) {

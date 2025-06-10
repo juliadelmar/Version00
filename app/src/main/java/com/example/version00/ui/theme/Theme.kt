@@ -29,7 +29,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun Version00Theme(
+fun SyntraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit

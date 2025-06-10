@@ -83,7 +83,7 @@ class RutinaFirebaseViewModel : ViewModel() {
         }
     }
 
-    // Obtener los ejercicios guardados de una rutina
+
     fun obtenerHistorialFatiga(onResult: (List<EntradaHistorial>) -> Unit) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return onResult(emptyList())
 
