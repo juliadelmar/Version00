@@ -30,6 +30,22 @@ class AuthViewModel : ViewModel() {
                 }
             }
     }
+    fun actualizarNombre(nuevoNombre: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseDatabase.getInstance().getReference("usuarios").child(uid)
+            .child("nombre").setValue(nuevoNombre)
+    }
+
+    fun actualizarAvatarUrl(nuevaUrl: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseDatabase.getInstance().getReference("usuarios").child(uid)
+            .child("avatarUrl").setValue(nuevaUrl)
+    }
+
+    fun cambiarContrasena(nuevaContrasena: String) {
+        val usuario = FirebaseAuth.getInstance().currentUser
+        usuario?.updatePassword(nuevaContrasena)
+    }
 
     // Función para registrar un nuevo usuario con email, contraseña y nombre
     fun register(email: String, password: String, nombre: String, onSuccess: () -> Unit) {

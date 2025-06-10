@@ -1,15 +1,18 @@
 package com.example.version00.ui.screens.configuration
 
-// Imports necesarios para UI, estado, navegación y almacenamiento
+import android.app.Activity
 import android.content.Context
-import androidx.activity.ComponentActivity
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,53 +20,59 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.version00.ui.components.ButtomSalir
-import com.example.version00.ui.theme.Indices
 import com.example.version00.ui.viewmodel.AuthViewModel
-import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
-// Pantalla de configuración del usuario (perfil, tema, cerrar sesión)
 @Composable
-fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostController) {
-    // Estados para datos del usuario
-    var avatarUrl by remember { mutableStateOf("") }
-    var nombre by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+fun ConfigurationScreen(
+    viewModel: AuthViewModel,
+    navController: NavHostController
+) {
     val context = LocalContext.current
-
-    // Obtener tema guardado desde SharedPreferences
+    val activity = LocalContext.current as? Activity
     val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    val savedTheme = sharedPref.getString("app_theme", "system") ?: "system"
-    var currentTheme by remember { mutableStateOf(savedTheme) }
 
-    // Scope para lanzar corutinas (para guardar tema y recrear actividad)
-    val scope = rememberCoroutineScope()
+    var avatarPath by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf("Usuario") }
+    var email by remember { mutableStateOf("usuario@email.com") }
+    var themeMode by remember { mutableStateOf(sharedPref.getString("app_theme", "system") ?: "system") }
 
-    // Cargar datos del usuario al inicio
     LaunchedEffect(Unit) {
-        viewModel.cargarDatosUsuario { nombreFetched, emailFetched, urlFetched ->
+        avatarPath = sharedPref.getString("avatarPath", "") ?: ""
+        viewModel.cargarDatosUsuario { nombreFetched, emailFetched, _ ->
             nombre = nombreFetched
             email = emailFetched
-            avatarUrl = urlFetched
         }
     }
 
-    // Layout principal en columna
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val filePath = saveImageToInternalStorage(context, it)
+            filePath?.let { path ->
+                sharedPref.edit().putString("avatarPath", path).apply()
+                avatarPath = path
+                Toast.makeText(context, "Imagen actualizada ✅", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        // Fila de título con botón atrás
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 24.dp)
-        ) {
+        // 🔙 Back + título
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Atrás",
@@ -72,68 +81,114 @@ fun ConfigurationScreen(viewModel: AuthViewModel, navController: NavHostControll
                     .clickable { navController.popBackStack() }
                     .padding(end = 8.dp)
             )
-            Text("Mi Cuenta", fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text("Mi Cuenta", fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
         }
 
-        // Información del usuario con imagen y texto
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 👤 Avatar editable
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
+                .size(100.dp)
+                .clip(CircleShape)
+                .clickable { imagePickerLauncher.launch("image/*") }
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
         ) {
-            AsyncImage(
-                model = avatarUrl,
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
+            if (avatarPath.isNotEmpty() && File(avatarPath).exists()) {
+                AsyncImage(
+                    model = File(avatarPath).toURI().toString(),
+                    contentDescription = "Avatar",
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text("👤", fontSize = 42.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Datos de usuario
+        Text(nombre, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        Text(email, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ✏️ Botón cambiar nombre
+        ElevatedButton(
+            onClick = {
+                Toast.makeText(context, "Función para cambiar nombre (próximamente)", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.elevatedButtonColors()
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Cambiar nombre")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ✏️ Botón cambiar contraseña
+        ElevatedButton(
+            onClick = {
+                Toast.makeText(context, "Función para cambiar contraseña (próximamente)", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.elevatedButtonColors()
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Cambiar contraseña")
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text("Tema de la aplicación", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
+
+        // 🌞🌚 Switch de tema
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Claro", color = MaterialTheme.colorScheme.onBackground)
+            Switch(
+                checked = themeMode == "dark",
+                onCheckedChange = {
+                    themeMode = if (it) "dark" else "light"
+                    sharedPref.edit().putString("app_theme", themeMode).apply()
+                    activity?.recreate()
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.secondary
+                )
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(nombre, color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp)
-                Text(email, color = Color.Gray, fontSize = 14.sp)
-            }
+            Text("Oscuro", color = MaterialTheme.colorScheme.onBackground)
         }
 
-        // Opciones de tema
-        Text("Tema de la aplicación", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        listOf("light", "dark").forEach { themeOption ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable {
-                        currentTheme = themeOption
-                        scope.launch {
-                            sharedPref.edit().putString("app_theme", themeOption).apply()
-                            (context as? ComponentActivity)?.recreate() // Recarga la actividad para aplicar el nuevo tema
-                        }
-                    },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Indices)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentTheme == themeOption,
-                        onClick = null // Manejado por el clickable externo
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = if (themeOption == "light") "Claro" else "Oscuro",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-        }
+        // 🔓 Botón cerrar sesión
+        ButtomSalir(navController)
+    }
+}
 
-        // Espaciado y botón de cerrar sesión
-        Spacer(modifier = Modifier.height(30.dp))
-        ButtomSalir(navController = navController)
+// 🔐 Función para guardar imagen localmente
+fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val file = File(context.filesDir, "profile_image.jpg")
+        val outputStream = FileOutputStream(file)
+        inputStream?.copyTo(outputStream)
+        inputStream?.close()
+        outputStream.close()
+        file.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
     }
 }
