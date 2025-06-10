@@ -139,7 +139,10 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
         composable(AppDestinations.REGLA_ROUTE) {
             val rutinaViewModel: RutinaFirebaseViewModel = viewModel()
             val cicloViewModel: CalendarioMenstrualViewModel =
-                viewModel(factory = CalendarioViewModelFactory(LocalContext.current.applicationContext))
+                viewModel(factory = CalendarioMenstrualViewModel.CalendarioViewModelFactory(
+                    LocalContext.current.applicationContext
+                )
+                )
 
             var historial by remember { mutableStateOf(emptyList<EntradaHistorial>()) }
             var diasConEntrenamiento by remember { mutableStateOf(emptyList<LocalDate>()) }
@@ -214,7 +217,10 @@ fun AuthNavGraph(navController: NavHostController, authViewModel: AuthViewModel)
         ) { backStackEntry ->
             val rutinaId = backStackEntry.arguments?.getInt("rutinaId") ?: -1
             val rutinaViewModel: RutinaFirebaseViewModel = viewModel()
-            val cicloViewModel: CalendarioMenstrualViewModel = viewModel(factory = CalendarioViewModelFactory(LocalContext.current))
+            val cicloViewModel: CalendarioMenstrualViewModel = viewModel(factory = CalendarioMenstrualViewModel.CalendarioViewModelFactory(
+                LocalContext.current
+            )
+            )
 
             var ejercicios by remember { mutableStateOf(emptyList<com.example.version00.ui.model.EjercicioGuardado>()) }
             var rutinaNombre by remember { mutableStateOf("Rutina $rutinaId") }

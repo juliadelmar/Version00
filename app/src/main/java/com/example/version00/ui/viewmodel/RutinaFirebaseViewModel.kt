@@ -22,117 +22,93 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
-// Clase de ViewModel para manejar la lógica de rutinas y ejercicios en Firebase
+
 class RutinaFirebaseViewModel : ViewModel() {
-    // Referencia a la base de datos de Firebase Realtime Database
+
     private val dbRef = FirebaseDatabase.getInstance().reference
-    // Instancia de FirebaseAuth para autenticar usuarios
     private val auth = FirebaseAuth.getInstance()
 
-    // Función para obtener el UID del usuario actual
     private fun getUserUid(): String? = auth.currentUser?.uid
 
-    // Función para guardar un ejercicio detallado en una rutina
+    // Guardar ejercicio detallado
     fun guardarEjercicioDetalladoEnRutina(
         rutinaId: Int,
         ejercicio: EjercicioGuardado,
         onResult: (Boolean, String) -> Unit
     ) {
-        // Obtiene el UID del usuario actual
         val uid = getUserUid()
         if (uid == null) {
-            // Si el usuario no está autenticado, llama a la función onResult con false y un mensaje de error
             onResult(false, "Usuario no autenticado")
             return
         }
 
-        // Crea una referencia al ejercicio en la base de datos
         val ejercicioKey = "ejercicio_${ejercicio.id}"
         val ejercicioRef = dbRef
             .child("usuarios").child(uid)
             .child("rutinas").child("rutina_$rutinaId")
             .child(ejercicioKey)
 
-        // Verifica si el ejercicio ya existe en la rutina
         ejercicioRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    // Si el ejercicio ya existe, llama a la función onResult con false y un mensaje de error
-                    onResult(false, "Ya existe en la rutina")
+                    onResult(false, "⚠️ Ya existe en la rutina")
                 } else {
-                    // Si el ejercicio no existe, lo guarda en la base de datos
                     ejercicioRef.setValue(ejercicio)
-                        .addOnSuccessListener { onResult(true, "Ejercicio guardado") }
+                        .addOnSuccessListener { onResult(true, "✅ Ejercicio guardado") }
                         .addOnFailureListener {
-                            // Loguea el error y llama a la función onResult con false y un mensaje de error
-                            Log.e("Firebase", "Error al guardar ejercicio: ${it.message}")
-                            onResult(false, "Error al guardar")
+                            Log.e("Firebase", "❌ Error al guardar ejercicio: ${it.message}")
+                            onResult(false, "❌ Error al guardar")
                         }
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Loguea el error y llama a la función onResult con false y un mensaje de error
-                Log.e("Firebase", "Cancelado: ${error.message}")
-                onResult(false, "Error en la operación")
+                Log.e("Firebase", "❌ Cancelado: ${error.message}")
+                onResult(false, "❌ Error en la operación")
             }
         })
     }
 
-    // Función para obtener un ejercicio por su ID
     fun obtenerEjercicioPorId(ejercicioId: Int, onResult: (Ejercicio?) -> Unit) {
-        // Obtiene la instancia de la API de Retrofit
         val api = RetrofitClient.api
-        // Lanza una corrutina para obtener el ejercicio
         viewModelScope.launch {
             try {
-                // Obtiene la lista de ejercicios desde la API
                 val lista = api.obtenerEjercicios()
-                // Busca el ejercicio por su ID
                 val encontrado = lista.find { it._id == ejercicioId }
-                // Llama a la función onResult con el ejercicio encontrado o null si no se encontró
                 onResult(encontrado)
             } catch (e: Exception) {
-                // Loguea el error y llama a la función onResult con null
                 Log.e("Firebase", "Error al buscar ejercicio: ${e.message}")
                 onResult(null)
             }
         }
     }
 
-    // Función para obtener el historial de fatiga
+    // Obtener los ejercicios guardados de una rutina
     fun obtenerHistorialFatiga(onResult: (List<EntradaHistorial>) -> Unit) {
-        // Obtiene el UID del usuario actual
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return onResult(emptyList())
 
-        // Crea una referencia al historial de fatiga en la base de datos
         val ref = FirebaseDatabase.getInstance().reference
             .child("usuarios").child(uid).child("historial_fatiga")
 
-        // Obtiene el historial de fatiga
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                // Mapea los datos del historial de fatiga a una lista de objetos EntradaHistorial
                 val lista = mutableListOf<EntradaHistorial>()
                 snapshot.children.forEach { item ->
                     val fecha = item.child("fecha").getValue(String::class.java) ?: return@forEach
                     val nombre = item.child("rutinaNombre").getValue(String::class.java) ?: "Sin nombre"
                     val fatiga = item.child("fatigaPorMusculo").value as? Map<*, *>
- 
+
                     val musculos = fatiga?.keys?.joinToString(", ") ?: "Sin datos"
-                    lista.add(EntradaHistorial(fecha, nombre, musculos))                }
-                // Llama a la función onResult con la lista de entradas del historial de fatiga
+                    lista.add(EntradaHistorial(fecha, nombre, musculos))
+                }
                 onResult(lista)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Llama a la función onResult con una lista vacía
                 onResult(emptyList())
             }
         })
     }
-}
-
     fun actualizarFatigaAcumulada(
         fatigaNueva: Map<String, Double>,
         onComplete: (Boolean, String) -> Unit
@@ -298,10 +274,10 @@ class RutinaFirebaseViewModel : ViewModel() {
 
         pesoRef.setValue(peso)
             .addOnSuccessListener {
-                onResult(true, " Peso guardado")
+                onResult(true, "✅ Peso guardado")
             }
             .addOnFailureListener {
-                onResult(false, " Error al guardar peso: ${it.message}")
+                onResult(false, "❌ Error al guardar peso: ${it.message}")
             }
     }
     fun obtenerUltimoPesoEjecutado(
@@ -324,15 +300,15 @@ class RutinaFirebaseViewModel : ViewModel() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val peso = snapshot.getValue(Float::class.java)
                 if (peso != null) {
-                    Log.d("Firebase", " Último peso obtenido para $ejercicioId: $peso kg")
+                    Log.d("Firebase", "✅ Último peso obtenido para $ejercicioId: $peso kg")
                 } else {
-                    Log.w("Firebase", " No hay peso guardado para el ejercicio $ejercicioId")
+                    Log.w("Firebase", "⚠️ No hay peso guardado para el ejercicio $ejercicioId")
                 }
                 onResult(peso)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", " Error al obtener último peso: ${error.message}")
+                Log.e("Firebase", "❌ Error al obtener último peso: ${error.message}")
                 onResult(null)
             }
         })
@@ -379,12 +355,12 @@ class RutinaFirebaseViewModel : ViewModel() {
 
         historialRef.setValue(historialData)
             .addOnSuccessListener {
-                Log.d("Firebase", " Historial de rutina guardado")
-                onResult(true, " Rutina guardada en historial")
+                Log.d("Firebase", "✅ Historial de rutina guardado")
+                onResult(true, "✅ Rutina guardada en historial")
             }
             .addOnFailureListener {
-                Log.e("Firebase", " Error al guardar historial: ${it.message}")
-                onResult(false, " Error al guardar historial")
+                Log.e("Firebase", "❌ Error al guardar historial: ${it.message}")
+                onResult(false, "❌ Error al guardar historial")
             }
     }
 
@@ -548,12 +524,12 @@ class RutinaFirebaseViewModel : ViewModel() {
 
         historialRef.setValue(historial)
             .addOnSuccessListener {
-                Log.d(TAG, " Historial de fatiga guardado para rutina $rutinaId")
-                onResult(true, " Historial de fatiga guardado correctamente")
+                Log.d(TAG, "✅ Historial de fatiga guardado para rutina $rutinaId")
+                onResult(true, "✅ Historial de fatiga guardado correctamente")
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, " Error al guardar historial de fatiga: ${e.message}", e)
-                onResult(false, " Error al guardar historial: ${e.message}")
+                Log.e(TAG, "❌ Error al guardar historial de fatiga: ${e.message}", e)
+                onResult(false, "❌ Error al guardar historial: ${e.message}")
             }
     }
 
@@ -562,7 +538,7 @@ class RutinaFirebaseViewModel : ViewModel() {
     fun eliminarEjercicioDeRutina(rutinaId: Int, ejercicioId: Int) {
         val uid = getUserUid()
         if (uid == null) {
-            Log.e("Firebase", " Usuario no autenticado. No se puede eliminar.")
+            Log.e("Firebase", "❌ Usuario no autenticado. No se puede eliminar.")
             return
         }
 
@@ -616,10 +592,10 @@ class RutinaFirebaseViewModel : ViewModel() {
         val uid = getUserUid()
 
         val rutinaRef = uid?.let {
-        dbRef.child("usuarios").child(it)
-            .child("rutinas") .child(rutinaId.toString())
-            .child("nombre")
-    }
+            dbRef.child("usuarios").child(it)
+                .child("rutinas") .child(rutinaId.toString())
+                .child("nombre")
+        }
 
 
         rutinaRef!!.setValue(nuevoNombre)
@@ -710,10 +686,10 @@ class RutinaFirebaseViewModel : ViewModel() {
             .child("ejercicio_${ejercicioActualizado.id}")
 
         ejercicioRef.setValue(ejercicioActualizado)
-            .addOnSuccessListener { onResult(true, " Ejercicio actualizado") }
+            .addOnSuccessListener { onResult(true, "✅ Ejercicio actualizado") }
             .addOnFailureListener {
-                Log.e("Firebase", " Error al actualizar ejercicio: ${it.message}")
-                onResult(false, " Error al actualizar")
+                Log.e("Firebase", "❌ Error al actualizar ejercicio: ${it.message}")
+                onResult(false, "❌ Error al actualizar")
             }
     }
 
@@ -732,15 +708,15 @@ class RutinaFirebaseViewModel : ViewModel() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val rutina = snapshot.getValue(Rutina::class.java)
                 if (rutina != null) {
-                    Log.d("Firebase", " Rutina obtenida: ${rutina.nombre}")
+                    Log.d("Firebase", "✅ Rutina obtenida: ${rutina.nombre}")
                 } else {
-                    Log.w("Firebase", " No se encontró la rutina con ID: $rutinaId")
+                    Log.w("Firebase", "⚠️ No se encontró la rutina con ID: $rutinaId")
                 }
                 onResult(rutina)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", " Error al obtener rutina: ${error.message}")
+                Log.e("Firebase", "❌ Error al obtener rutina: ${error.message}")
                 onResult(null)
             }
         })

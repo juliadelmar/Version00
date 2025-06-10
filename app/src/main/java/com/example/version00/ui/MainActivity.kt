@@ -15,7 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.version00.ui.navigation.AuthNavGraph
 import com.example.version00.ui.theme.Version00Theme
 import com.example.version00.ui.viewmodel.AuthViewModel
-import com.example.version00.ui.viewmodel.FriendViewModel
 
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
@@ -32,17 +31,8 @@ class MainActivity : ComponentActivity() {
                 1001
             )
         }
-        val viewModel = FriendViewModel()
 
-        viewModel.obtenerSolicitudesRecibidas { solicitudes ->
-            if (solicitudes.isNotEmpty()) {
-                Toast.makeText(
-                    this,
-                    "Tienes ${solicitudes.size} solicitud(es) de amistad",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
+
 
         setContent {
             val darkTheme = savedTheme == "dark"
